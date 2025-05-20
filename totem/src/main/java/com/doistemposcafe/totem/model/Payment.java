@@ -4,6 +4,8 @@ package com.doistemposcafe.totem.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @Table(name = "payment")
@@ -19,10 +21,10 @@ public class Payment {
     @Column(name = "transaction_id")
     private String transactionId;
     @Column(name = "payment_date")
-    private String paymentDate;
+    private LocalDateTime paymentDate;  // Mudança aqui
 
-    // Belongs to an order
-    @OneToOne
+    // Relacionamento com Order (supondo que um pagamento tem um pedido)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
 

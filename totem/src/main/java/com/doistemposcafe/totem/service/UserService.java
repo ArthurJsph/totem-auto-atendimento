@@ -4,6 +4,7 @@ import com.doistemposcafe.totem.dto.Input.UserInputDTO;
 import com.doistemposcafe.totem.dto.Output.UserOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.UserMapper;
 import com.doistemposcafe.totem.model.Role;
+import com.doistemposcafe.totem.model.User;
 import com.doistemposcafe.totem.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository,
-                       UserMapper userMapper) {
+                       UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserOutputDTO> getAllUsers() {
@@ -31,7 +34,9 @@ public class UserService {
     }
 
     public UserOutputDTO saveUser(UserInputDTO inputDTO) {
-        return userMapper.toOutputDTO(userRepository.save(userMapper.toEntity(inputDTO)));
+        User user = userMapper.toEntity(inputDTO);
+        user.setPassword(passwordEncoder.encode(inputDTO.password()));
+        return userMapper.toOutputDTO(userRepository.save(user));
     }
 
     public UserOutputDTO updateUser(UserInputDTO inputDTO, Long id) {
@@ -42,7 +47,7 @@ public class UserService {
                     existing.setPassword(inputDTO.password());
                     existing.setPhone(inputDTO.phone());
                     existing.setCpf(inputDTO.cpf());
-                    existing.setRole(String.valueOf(Role.valueOf(inputDTO.role())));
+                    existing.setRole(Role.valueOf(inputDTO.role()));
                     return userRepository.save(existing);
                 })
                 .map(userMapper::toOutputDTO)

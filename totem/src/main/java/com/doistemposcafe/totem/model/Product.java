@@ -2,6 +2,8 @@ package com.doistemposcafe.totem.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,7 +26,14 @@ public class Product {
     private String imageUrl;
     private String[] ingredients;
     private Integer amount;
+    @Temporal(TemporalType.TIMESTAMP)
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime created_at;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @UpdateTimestamp
     private LocalDateTime updated_at;
 
     // Belongs to a restaurant

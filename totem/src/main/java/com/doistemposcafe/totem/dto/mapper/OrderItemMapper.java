@@ -10,8 +10,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
-    OrderItemMapper INSTANCE = Mappers.getMapper(OrderItemMapper.class);
-
     OrderItem toEntity(OrderItemInputDTO dto);
     OrderItemOutputDTO toOutputDTO(OrderItem item);
     List<OrderItemOutputDTO> toOutputDTOs(List<OrderItem> items);

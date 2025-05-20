@@ -7,6 +7,7 @@ import com.doistemposcafe.totem.model.Restaurant;
 import com.doistemposcafe.totem.service.RestaurantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,16 +37,19 @@ public class RestaurantController {
     }
 
     @PostMapping("/save")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RestaurantOutputDTO> saveRestaurant(@RequestBody RestaurantInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.saveRestaurant(dto));
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RestaurantOutputDTO> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantInputDTO dto) {
         return ResponseEntity.ok(restaurantService.updateRestaurant(dto, id));
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRestaurant(@PathVariable Long id) {
         boolean deleted = restaurantService.deleteRestaurant(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();

@@ -2,6 +2,7 @@ package com.doistemposcafe.totem.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 
 import java.time.LocalDateTime;
@@ -35,9 +36,13 @@ public class Restaurant {
     private String coverImageUrl;
 
     @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    @CreationTimestamp
     private LocalDateTime updatedAt;
 
     // Belongs to a manager

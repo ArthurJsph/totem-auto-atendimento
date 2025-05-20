@@ -4,6 +4,7 @@ import com.doistemposcafe.totem.dto.Input.ManagerInputDTO;
 import com.doistemposcafe.totem.dto.Output.ManagerOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.ManagerMapper;
 import com.doistemposcafe.totem.model.Manager;
+import com.doistemposcafe.totem.model.Role;
 import com.doistemposcafe.totem.repository.ManagerRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,13 @@ public class ManagerService {
 
     private final ManagerRepository managerRepository;
     private final ManagerMapper managerMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public ManagerService(ManagerRepository managerRepository,
-                          ManagerMapper managerMapper) {
+                          ManagerMapper managerMapper, PasswordEncoder passwordEncoder) {
         this.managerRepository = managerRepository;
         this.managerMapper = managerMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<ManagerOutputDTO> getAllManagers() {
@@ -31,8 +34,18 @@ public class ManagerService {
     }
 
     public ManagerOutputDTO saveManager(ManagerInputDTO inputDTO) {
-        return managerMapper.toOutputDTO(managerRepository.save(managerMapper.toEntity(inputDTO)));
+        Manager entity = managerMapper.toEntity(inputDTO);
+        entity.setPassword(passwordEncoder.encode(inputDTO.password()));
+
+        // Converte String para Enum Role
+        if (inputDTO.role() != null) {
+            entity.setRole(Role.valueOf(inputDTO.role()));
+        }
+
+        Manager savedManager = managerRepository.save(entity);
+        return managerMapper.toOutputDTO(savedManager);
     }
+
 
     public ManagerOutputDTO updateManager(ManagerInputDTO inputDTO, Long id) {
         return managerRepository.findById(id)

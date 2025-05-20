@@ -12,8 +12,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
-
     User toEntity(UserInputDTO dto);
     UserOutputDTO toOutputDTO(User entity);
     List<UserOutputDTO> toOutputDTOs(List<User> users);

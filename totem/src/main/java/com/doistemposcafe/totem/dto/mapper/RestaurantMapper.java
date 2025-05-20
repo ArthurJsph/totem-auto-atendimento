@@ -12,8 +12,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface RestaurantMapper {
-    RestaurantMapper INSTANCE = Mappers.getMapper(RestaurantMapper.class);
-
     Restaurant toEntity(RestaurantInputDTO dto);
     RestaurantOutputDTO toOutputDTO(Restaurant restaurant);
     List<RestaurantOutputDTO> toOutputDTOs(List<Restaurant> restaurants);

@@ -9,9 +9,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ManagerMapper {
-    ManagerMapper INSTANCE = org.mapstruct.factory.Mappers.getMapper(ManagerMapper.class);
-
-
     Manager toEntity(ManagerInputDTO dto);
     ManagerOutputDTO toOutputDTO(Manager entity);
     List<ManagerOutputDTO> toOutputDTOs(List<Manager> managers);

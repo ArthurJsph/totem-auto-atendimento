@@ -3,6 +3,8 @@ package com.doistemposcafe.totem.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +21,14 @@ public class OrderItem {
     private double price;
     private int quantity;
     private String status;
+
+    @Column(updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    @CreationTimestamp
     private LocalDateTime  created_at;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @UpdateTimestamp
     private LocalDateTime updated_at;
 
     // Belongs to a product

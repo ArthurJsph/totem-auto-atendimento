@@ -8,6 +8,7 @@ import com.doistemposcafe.totem.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,16 +38,19 @@ public class ProductController {
     }
 
     @PostMapping("/save")
+    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
     public ResponseEntity<ProductOutputDTO> saveProduct(@RequestBody ProductInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(dto));
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
     public ResponseEntity<ProductOutputDTO> updateProduct(@PathVariable Long id, @RequestBody ProductInputDTO dto) {
         return ResponseEntity.ok(productService.updateProduct(dto, id));
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         boolean deleted = productService.deleteProduct(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();

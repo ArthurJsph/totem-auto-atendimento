@@ -6,11 +6,9 @@ import com.doistemposcafe.totem.dto.mapper.RestaurantMapper;
 import com.doistemposcafe.totem.model.Restaurant;
 import com.doistemposcafe.totem.repository.ManagerRepository;
 import com.doistemposcafe.totem.repository.RestaurantRepository;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Service

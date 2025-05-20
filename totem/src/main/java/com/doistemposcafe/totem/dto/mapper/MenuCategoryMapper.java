@@ -10,8 +10,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface MenuCategoryMapper {
-    MenuCategoryMapper INSTANCE = Mappers.getMapper(MenuCategoryMapper.class);
-
     MenuCategory toEntity(MenuCategoryInputDTO dto);
     MenuCategoryOutputDTO toOutputDTO(MenuCategory entity);
     List<MenuCategoryOutputDTO> toOutputDTOs(List<MenuCategory> menuCategories);
