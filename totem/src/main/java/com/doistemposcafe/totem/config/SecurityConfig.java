@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/restaurants/list").permitAll()
+                        .requestMatchers("/api/users/save").permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers
@@ -63,7 +64,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.getWriter().write("Acesso negado: você não tem permissão para acessar este recurso.");
+                            response.getWriter().write("Acesso negado: voce não tem permissao para acessar este recurso.");
                         })
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

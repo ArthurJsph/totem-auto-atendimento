@@ -47,14 +47,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
             if (!jwt.isTokenExpired(token)) {
 
-                // Extrai as roles do token
+                // extract user details from the token
                 List<String> authoritiesFromToken = jwt.extractAuthorities(token);
 
                 List<GrantedAuthority> authorities = authoritiesFromToken.stream()
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-                // Cria uma autenticação fake baseada apenas no token
+                // Create a new authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username, null, authorities
                 );

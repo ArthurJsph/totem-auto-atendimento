@@ -9,6 +9,7 @@ import com.doistemposcafe.totem.service.OrderItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,27 +28,32 @@ public class OrderItemController {
     }
 
     @GetMapping("/list")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<List<OrderItemOutputDTO>> getAllItems() {
         return ResponseEntity.ok(orderItemService.getAllItems());
     }
 
     @GetMapping("/list/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderItemOutputDTO> getItemById(@PathVariable Long id) {
         OrderItemOutputDTO item = orderItemService.getItemById(id);
         return item != null ? ResponseEntity.ok(item) : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/save")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderItemOutputDTO> saveItem(@RequestBody OrderItemInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderItemService.saveItem(dto));
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderItemOutputDTO> updateItem(@PathVariable Long id, @RequestBody OrderItemInputDTO dto) {
         return ResponseEntity.ok(orderItemService.updateItem(dto, id));
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
         boolean deleted = orderItemService.deleteItem(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
