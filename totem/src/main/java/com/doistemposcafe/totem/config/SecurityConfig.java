@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/restaurants/list").permitAll()
+                        .requestMatchers("/api/products/list").permitAll()
+                        .requestMatchers("/api/menu-categories/list").permitAll()
                         .requestMatchers("/api/users/save").permitAll()
                         .anyRequest().authenticated()
                 )

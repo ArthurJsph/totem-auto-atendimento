@@ -4,6 +4,7 @@ import com.doistemposcafe.totem.dto.Input.UserInputDTO;
 import com.doistemposcafe.totem.dto.Output.UserOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.UserMapper;
 import com.doistemposcafe.totem.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping("/save")
-    public ResponseEntity<UserOutputDTO> saveUser(@RequestBody UserInputDTO dto) {
+    public ResponseEntity<UserOutputDTO> saveUser(@Valid @RequestBody UserInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.saveUser(dto));
     }
 

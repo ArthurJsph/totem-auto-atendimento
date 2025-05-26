@@ -3,6 +3,7 @@ package com.doistemposcafe.totem.service;
 import com.doistemposcafe.totem.dto.Input.UserInputDTO;
 import com.doistemposcafe.totem.dto.Output.UserOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.UserMapper;
+import com.doistemposcafe.totem.exception.ResourceAlreadyExistsException;
 import com.doistemposcafe.totem.model.Role;
 import com.doistemposcafe.totem.model.User;
 import com.doistemposcafe.totem.repository.UserRepository;
@@ -34,9 +35,16 @@ public class UserService {
     }
 
     public UserOutputDTO saveUser(UserInputDTO inputDTO) {
+        if (userRepository.existsByEmail(inputDTO.email())) {
+            throw new ResourceAlreadyExistsException("E-mail já cadastrado.");
+        }
+        if (userRepository.existsByCpf(inputDTO.cpf())) {
+            throw new ResourceAlreadyExistsException("CPF já cadastrado.");
+        }
         User user = userMapper.toEntity(inputDTO);
-        user.setPassword(passwordEncoder.encode(inputDTO.password()));
-        return userMapper.toOutputDTO(userRepository.save(user));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
+        return userMapper.toOutputDTO(savedUser);
     }
 
     public UserOutputDTO updateUser(UserInputDTO inputDTO, Long id) {

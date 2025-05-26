@@ -6,6 +6,7 @@ import com.doistemposcafe.totem.dto.Output.ManagerOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.ManagerMapper;
 import com.doistemposcafe.totem.model.Manager;
 import com.doistemposcafe.totem.service.ManagerService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +41,7 @@ public class ManagerController {
 
     @PostMapping("/save")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ManagerOutputDTO> saveManager(@RequestBody ManagerInputDTO dto) {
+    public ResponseEntity<ManagerOutputDTO> saveManager(@Valid @RequestBody ManagerInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(managerService.saveManager(dto));
     }
 
