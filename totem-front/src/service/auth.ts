@@ -10,7 +10,7 @@ export async function login(email: string, password: string) {
     return response.data;
     
   } catch (error) {
-    console.error("Error logging in:", error);
+    console.error("Erro ao logar:", error);
     throw error;
   }
 }
@@ -20,7 +20,7 @@ export async function logout() {
     localStorage.removeItem("token");
     delete api.defaults.headers.common["Authorization"];
   } catch (error) {
-    console.error("Error logging out:", error);
+    console.error("Erro ao deslogar:", error);
     throw error;
   }
 }

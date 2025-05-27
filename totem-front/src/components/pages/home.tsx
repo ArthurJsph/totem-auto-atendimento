@@ -1,49 +1,82 @@
+import React, { useEffect, useState } from 'react';
+import { getAllProducts } from '../../service/product';
+
 const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Estado dos filtros (estáticos só para decorar)
+  const [categoryFilter, setCategoryFilter] = useState('Todos');
+  const [priceFilter, setPriceFilter] = useState('Todos');
+
+  useEffect(() => {
+    getAllProducts()
+      .then((data) => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoading(false);
+      });
+  }, []);
+
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg">
-      {/* Logo */}
-      <div className="flex justify-center mb-6">
-        <img
-          src="https://storage.googleapis.com/a1aa/image/u2Z7q8f7aZE5S8R04m0iUm0-HBdyqrlBEeGbPdLAX_8.jpg"
-          alt="2 Tempos Café logo"
-          className="w-48 h-auto rounded-md shadow-sm"
-        />
-      </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Cardápio</h1>
 
-      {/* Texto de boas-vindas */}
-      <h1 className="text-center text-3xl font-bold text-gray-800 mb-4">
-        Seja bem-vindo!
-      </h1>
-      <p className="text-center text-gray-600 mb-6 text-lg">
-        Escolha como prefere aproveitar sua refeição. Estamos aqui para oferecer praticidade e sabor em cada detalhe!
-      </p>
+{/* Filtros estáticos atualizados */}
+<div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center">
+  {/* Botões de categoria */}
+  <div className="flex gap-3 flex-wrap">
+    {['Todos', 'Bebidas', 'Sobremesas', 'Lanches'].map((cat) => (
+      <button
+        key={cat}
+        onClick={() => setCategoryFilter(cat)}
+        className={`px-4 py-2 rounded-full border text-sm font-medium transition ${
+          categoryFilter === cat
+            ? 'bg-orange-500 text-white border-orange-500'
+            : 'bg-white text-gray-700 border-gray-300 hover:bg-orange-100'
+        }`}
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
 
-      {/* Opções de atendimento */}
-      <div className="flex justify-around">
-        {/* Opção: Comer no local */}
-        <div className="text-center">
-          <img
-            src="https://storage.googleapis.com/a1aa/image/fOQfUzlJI2HlSSovAvy0tFoXmz4u9ZbcnhIA-WBmk5k.jpg"
-            alt="Burger"
-            className="w-28 h-28 mx-auto mb-3 rounded-lg shadow-md"
-          />
-          <button className="bg-amber-600 text-white rounded-lg px-5 py-3 text-lg font-semibold shadow-md hover:bg-amber-700 transition">
-            Para comer aqui
-          </button>
+  {/* Select de preço */}
+  <select
+    className="border rounded px-3 py-2 mt-2 md:mt-0"
+    value={priceFilter}
+    onChange={(e) => setPriceFilter(e.target.value)}
+  >
+    <option>Preço</option>
+    <option>Até R$5</option>
+    <option>R$5 a R$10</option>
+    <option>Acima de R$10</option>
+  </select>
+</div>
+
+      {/* Lista de produtos */}
+      {loading ? (
+        <p>Carregando produtos...</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {products.length === 0 && <p>Nenhum produto encontrado.</p>}
+          {products.map((product) => (
+            <div key={product.id} className="border rounded p-4 shadow hover:shadow-lg transition">
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="w-full h-48 object-cover rounded mb-4"
+              />
+              <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
+              <p className="text-gray-600 mb-2">{product.description}</p>
+              <p className="font-bold text-lg">R$ {product.price.toFixed(2)}</p>
+            </div>
+          ))}
         </div>
-
-        {/* Opção: Para levar */}
-        <div className="text-center">
-          <img
-            src="https://storage.googleapis.com/a1aa/image/GGQDfbbBO2Wa8gbA6Eq-ioxwno8PYPLHp9uq7tiwre0.jpg"
-            alt="Takeaway bag"
-            className="w-28 h-28 mx-auto mb-3 rounded-lg shadow-md"
-          />
-          <button className="bg-amber-500 text-white rounded-lg px-5 py-3 text-lg font-semibold shadow-md hover:bg-amber-600 transition">
-            Para levar
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
