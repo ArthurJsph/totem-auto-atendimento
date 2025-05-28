@@ -1,12 +1,8 @@
-import React from 'react';
-import Navbar from '../layout/navbar';
-import Footer from '../layout/footer';
+
 import { produtos } from './produto'; // ajuste o caminho conforme sua estrutura
 
 export function Cardapio() {
   return (
-    <>
-      <Navbar />
       <div className="min-h-screen bg-gray-100 p-6 pb-24">
         <h1 className="text-3xl font-bold mb-6 text-center">Nosso Cardápio</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -29,8 +25,6 @@ export function Cardapio() {
           ))}
         </div>
       </div>
-      <Footer />
-    </>
   );
 }
 
