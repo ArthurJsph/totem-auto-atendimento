@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "../components/pages/home";
-import CafeteriaPayment from "../components/pages/tipopagamento";
-import Cardapio from "../components/pages/cardapio";
-import Produto from "../components/pages/produto";
-import Error from "../components/pages/error";
-import Pedido from "../components/pages/pedido";
-import Error401 from "../components/pages/unathorized";
-import Login from "../autenticacao/login";
-import Registrar from "../autenticacao/registrar";
+import Home from "../pages/public/home";
+import CafeteriaPayment from "../pages/public/tipopagamento";
+import Cardapio from "../pages/public/cardapio";
+import Produto from "../pages/public/produto";
+import Error404 from "../pages/error/404";
+import Pedido from "../pages/public/pedido";
+import Error401 from "../pages/error/401";
+import Login from "../pages/auth/login";
+import Registrar from "../pages/auth/registrar";
 import Layout from "../components/layout/layout";
 const Rotas = () => {
     return (
@@ -20,7 +20,7 @@ const Rotas = () => {
           <Route path="/cardapio" element={<Cardapio />} />
           <Route path="/produto" element={<Layout><Produto /></Layout>} />
           <Route path="/pedido" element={<Layout><Pedido /></Layout>} />
-          <Route path="*" element={<Error />} />
+          <Route path="*" element={<Error404 />} />
           <Route path="/unauthorized" element={<Error401 />} />
         </Routes>
       </Router>

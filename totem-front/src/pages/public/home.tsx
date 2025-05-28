@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAllProducts } from '../../service/product';
+import { Product } from '../../service/interfaces';
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Estado dos filtros (estáticos só para decorar)
   const [categoryFilter, setCategoryFilter] = useState('Todos');
   const [priceFilter, setPriceFilter] = useState('Todos');
 
@@ -72,7 +71,9 @@ const Home = () => {
               />
               <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
               <p className="text-gray-600 mb-2">{product.description}</p>
-              <p className="font-bold text-lg">R$ {product.price.toFixed(2)}</p>
+              <p className="font-bold text-lg">
+                R$ {product.price !== undefined ? product.price.toFixed(2) : '--'}
+              </p>
             </div>
           ))}
         </div>

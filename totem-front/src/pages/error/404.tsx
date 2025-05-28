@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Error() {
+export default function Error404() {
 const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">

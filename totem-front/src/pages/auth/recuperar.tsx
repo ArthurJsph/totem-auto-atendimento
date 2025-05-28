@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { api } from '../services/api'; // Ajuste o caminho conforme necessário
+import { api } from '../../service/api'; 
 import { useNavigate } from 'react-router-dom';
-const EsquecerSenha: React.FC = () => {
+const Recuperar: React.FC = () => {
     const [email, setEmail] = useState('');
     const [triedSubmit, setTriedSubmit] = useState(false);
     const navigate = useNavigate();
@@ -24,8 +24,12 @@ const EsquecerSenha: React.FC = () => {
             await api.post('/usuario/senha/esqueceu/', { email });
             toast.success(`Email de recuperação enviado para: ${email}`);
             navigate('/redefinir-senha');
-          } catch (error: any) {
-            const message = error.response?.data?.message || 'Erro ao enviar o email';
+          } catch (error: unknown) {
+            let message = 'Erro ao enviar o email';
+            if (error && typeof error === 'object' && 'response' in error) {
+              const err = error as { response?: { data?: { message?: string } } };
+              message = err.response?.data?.message || message;
+            }
             toast.error(message);
           }
       };
@@ -86,4 +90,4 @@ const EsquecerSenha: React.FC = () => {
     );
 };
 
-export default EsquecerSenha;
+export default Recuperar;
