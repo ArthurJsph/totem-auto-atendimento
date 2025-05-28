@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { login } from "../service/auth";
+import { Link } from "react-router-dom";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -20,9 +22,14 @@ function Login() {
     });
   };
 
+  const handleGoogleLoginSuccess = (credentialResponse: any) => {
+    // Aqui você pode enviar o token para sua API ou autenticar o usuário
+    console.log(credentialResponse);
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex flex-1 md:flex-row">
+    <div className="flex h-screen overflow-hidden">
+      <div className="flex flex-1 md:flex-row w-full">
         <div className="hidden md:flex w-[80%] bg-gray-100 items-center justify-center">
           <img
             src="src/assets/login.png"
@@ -61,7 +68,7 @@ function Login() {
                     type="password"
                     placeholder="Senha"
                     name="senha"
-                    className="pl-10 pr-10 py-2 w-full rounded-lg bg-gray-100 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="pl-10 pr-10 py-2 w-full rounded-lg bg-gray-100 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     required
@@ -97,14 +104,57 @@ function Login() {
               </button>
 
               <div className="flex justify-between items-center mt-2">
-                <a
-                  href="/Esquecer-Senha"
+                <Link
+                  to="/esquecer-senha"
                   className="text-blue-600 hover:underline text-sm"
                 >
                   Esqueci minha senha
-                </a>
+                </Link>
               </div>
             </form>
+
+            <GoogleOAuthProvider clientId="SEU_CLIENT_ID_AQUI">
+              <div className="flex justify-center mt-4">
+                <GoogleLogin
+                  onSuccess={handleGoogleLoginSuccess}
+                  onError={() => {
+                    console.log("Login Failed");
+                  }}
+                  width="100%"
+                  text="continue_with"
+                  shape="pill"
+                  theme="filled_black"
+                  render={(renderProps) => (
+                    <button
+                      onClick={renderProps.onClick}
+                      disabled={renderProps.disabled}
+                      className="w-1/2 py-2 rounded-lg bg-white border border-red-700 text-red-700 font-semibold flex items-center justify-center gap-2 shadow transition hover:bg-red-50"
+                      type="button"
+                    >
+                      <svg className="h-5 w-5" viewBox="0 0 48 48">
+                        <path
+                          fill="#FFC107"
+                          d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7-11.3 7-6.6 0-12-5.4-12-12s5.4-12 12-12c2.7 0 5.2.9 7.2 2.4l6-6C34.5 5.1 29.5 3 24 3 12.9 3 4 11.9 4 23s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.5-.3-3.5z"
+                        />
+                        <path
+                          fill="#FF3D00"
+                          d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c2.7 0 5.2.9 7.2 2.4l6-6C34.5 5.1 29.5 3 24 3c-7.2 0-13.4 4.1-16.7 10.1z"
+                        />
+                        <path
+                          fill="#4CAF50"
+                          d="M24 43c5.4 0 10.4-1.8 14.2-4.9l-6.6-5.4C29.5 34.9 26.9 36 24 36c-5.6 0-10.3-3.7-12-8.7l-6.6 5.1C7.9 39.1 15.4 43 24 43z"
+                        />
+                        <path
+                          fill="#1976D2"
+                          d="M43.6 20.5h-1.9V20H24v8h11.3c-1.3 3.5-4.3 6-8.3 6-5.6 0-10.3-3.7-12-8.7l-6.6 5.1C7.9 39.1 15.4 43 24 43c8.6 0 16.1-3.9 19.7-10.1z"
+                        />
+                      </svg>
+                      Google
+                    </button>
+                  )}
+                />
+              </div>
+            </GoogleOAuthProvider>
 
             <a
               href="/registrar"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { api } from '../services/api'; // Ajuste o caminho conforme necessário
+import { api } from '../service/api';
 import { useNavigate } from 'react-router-dom';
 const EsquecerSenha: React.FC = () => {
     const [email, setEmail] = useState('');

@@ -1,100 +1,271 @@
+import React, { useState } from "react";
+import Navbar from "../layout/navbar";
+import Footer from "../layout/footer";
+
+export const produtos = [
+  {
+    id: 1,
+    nome: "Café Espresso",
+    descricao: "Café espresso encorpado e aromático.",
+    preco: 6.5,
+    imagem: "/imagens/cafe-espresso.jpg",
+  },
+  {
+    id: 2,
+    nome: "Cappuccino",
+    descricao: "Café com leite vaporizado e espuma cremosa.",
+    preco: 8.0,
+    imagem: "/imagens/cappuccino.jpg",
+  },
+  {
+    id: 3,
+    nome: "Pão de Queijo",
+    descricao: "Tradicional pão de queijo mineiro.",
+    preco: 4.0,
+    imagem: "/imagens/pao-de-queijo.jpg",
+  },
+  {
+    id: 4,
+    nome: "Bolo de Cenoura",
+    descricao: "Bolo de cenoura com cobertura de chocolate.",
+    preco: 7.0,
+    imagem: "/imagens/bolo-cenoura.jpg",
+  },
+  {
+    id: 5,
+    nome: "Mocha",
+    descricao: "Café com chocolate e leite vaporizado.",
+    preco: 9.0,
+    imagem: "/imagens/mocha.jpg",
+  },
+  {
+    id: 6,
+    nome: "Croissant",
+    descricao: "Croissant francês amanteigado.",
+    preco: 5.5,
+    imagem: "/imagens/croissant.jpg",
+  },
+  {
+    id: 7,
+    nome: "Latte",
+    descricao: "Café espresso com leite vaporizado.",
+    preco: 7.5,
+    imagem: "/imagens/latte.jpg",
+  },
+  {
+    id: 8,
+    nome: "Torta de Limão",
+    descricao: "Torta de limão com merengue.",
+    preco: 8.5,
+    imagem: "/imagens/torta-limao.jpg",
+  },
+  {
+    id: 9,
+    nome: "Chocolate Quente",
+    descricao: "Bebida quente de chocolate cremoso.",
+    preco: 6.0,
+    imagem: "/imagens/chocolate-quente.jpg",
+  },
+];
+
 const Produto = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [novoProduto, setNovoProduto] = useState({
+    nome: "",
+    descricao: "",
+    preco: "",
+    imagem: "",
+    categoria: "", // novo campo para categoria
+  });
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setNovoProduto({ ...novoProduto, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "image/png") {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNovoProduto((prev) => ({ ...prev, imagem: reader.result as string }));
+        setImagemPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setNovoProduto((prev) => ({ ...prev, imagem: "" }));
+      setImagemPreview(null);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("Produto cadastrado:\n" + JSON.stringify(novoProduto, null, 2));
+    setShowForm(false);
+    setNovoProduto({ nome: "", descricao: "", preco: "", imagem: "", categoria: "" });
+  };
+
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Campo de pesquisa no canto superior direito */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <div className="flex items-center bg-white rounded-full shadow px-3 py-1">
-          <input
-            type="text"
-            placeholder="Pesquisar produto..."
-            className="outline-none bg-transparent px-2 py-1 text-gray-700"
-          />
-          <button className="ml-2 text-green-700 hover:text-green-900">
-            {/* Ícone de lupa */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-            </svg>
+    <>
+      <Navbar />
+      <div className="relative min-h-screen bg-gray-50">
+        {/* Botões para alternar visualização */}
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <button
+            className={`px-3 py-1 rounded ${viewMode === "grid" ? "bg-red-700 text-white" : "bg-white text-gray-700 border"}`}
+            onClick={() => setViewMode("grid")}
+          >
+            Grade
+          </button>
+          <button
+            className={`px-3 py-1 rounded ${viewMode === "list" ? "bg-red-700 text-white" : "bg-white text-gray-700 border"}`}
+            onClick={() => setViewMode("list")}
+          >
+            Lista
           </button>
         </div>
-        {/* Botão para cadastrar novo produto */}
-        <button className="flex items-center bg-green-700 text-white px-4 py-2 rounded-full shadow hover:bg-green-800 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Produto
-        </button>
-      </div>
 
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden mt-6">
-        <div className="relative">
-          <img 
-            src="https://placehold.co/600x400" 
-            alt="A tapioca filled with chicken, bacon, and cheese, garnished with parsley" 
-            className="w-full h-48 object-cover"
-          />
-          <div className="absolute top-2 left-2">
-            <button className="bg-white p-2 rounded-full shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+        {/* Campo de pesquisa e botão */}
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <div className="flex items-center bg-white rounded-full shadow px-3 py-1">
+            <input
+              type="text"
+              placeholder="Pesquisar produto..."
+              className="outline-none bg-transparent px-2 py-1 text-gray-700"
+            />
+            <button className="ml-2 text-red-700 hover:text-red-900">
+              {/* Ícone de lupa */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
               </svg>
             </button>
           </div>
-          <div className="absolute top-2 right-2">
-            <button className="bg-white p-2 rounded-full shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
-            <button className="bg-white p-2 rounded-full shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
+          {/* Botão para cadastrar novo produto */}
+          <button
+            className="flex items-center bg-red-700 text-white px-4 py-2 rounded-full shadow hover:bg-red-800 transition-colors"
+            onClick={() => setShowForm(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Novo Produto
+          </button>
         </div>
-        <div className="p-4">
-          <div className="flex items-center mb-2">
-            <img src="https://placehold.co/24x24" alt="Cafe logo" className="w-6 h-6 rounded-full" />
-            <span className="ml-2 text-sm text-gray-600">2 tempos Café</span>
-          </div>
-          <h2 className="text-xl font-semibold">Tapioca Recheada</h2>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-2xl font-bold">R$ 12,00</span>
-            <div className="flex items-center">
-              <button className="bg-gray-200 p-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
+
+        {/* Modal do formulário */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+                onClick={() => setShowForm(false)}
+              >
+                &times;
               </button>
-              <span className="mx-2">1</span>
-              <button className="bg-red-500 text-white p-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-              </button>
+              <h2 className="text-xl font-bold mb-4">Cadastrar Novo Produto</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  type="text"
+                  name="nome"
+                  placeholder="Nome do produto"
+                  value={novoProduto.nome}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+                <textarea
+                  name="descricao"
+                  placeholder="Descrição"
+                  value={novoProduto.descricao}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="number"
+                  name="preco"
+                  placeholder="Preço"
+                  value={novoProduto.preco}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+                <input
+                  type="file"
+                  accept="image/png"
+                  onChange={handleImageChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+                {/* Campo de categoria */}
+                <select
+                  name="categoria"
+                  value={novoProduto.categoria}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                >
+                  <option value="">Selecione a categoria</option>
+                  <option value="Bebidas">Bebidas</option>
+                  <option value="Lanches">Lanches</option>
+                  <option value="Sobremesas">Sobremesas</option>
+                  <option value="Almoço">Almoço</option>
+                </select>
+                {imagemPreview && (
+                  <img
+                    src={imagemPreview}
+                    alt="Pré-visualização"
+                    className="w-full h-32 object-cover rounded mb-2"
+                  />
+                )}
+                <button
+                  type="submit"
+                  className="w-full bg-red-700 text-white py-2 rounded hover:bg-red-800 transition"
+                >
+                  Salvar Produto
+                </button>
+              </form>
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Sobre</h3>
-            <p className="text-gray-600">Tapioca caseira recheada com frango, bacon e queijo</p>
+        )}
+
+        {/* Grid ou Lista de produtos */}
+        <div className="container mx-auto pt-24 pb-8">
+          <h1 className="text-3xl font-bold mb-8 text-center">Produtos</h1>
+          <div className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
+              : "flex flex-col gap-6"
+          }>
+            {produtos.map((produto) => (
+              <div
+                key={produto.id}
+                className={
+                  viewMode === "grid"
+                    ? "bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform"
+                    : "bg-white rounded-lg shadow-md overflow-hidden flex"
+                }
+              >
+                <img
+                  src={produto.imagem}
+                  alt={produto.nome}
+                  className={viewMode === "grid" ? "w-full h-48 object-cover" : "w-48 h-48 object-cover"}
+                />
+                <div className="p-4 flex flex-col justify-center">
+                  <h2 className="text-xl font-semibold">{produto.nome}</h2>
+                  <p className="text-gray-600 text-sm mt-1">{produto.descricao}</p>
+                  <p className="text-green-700 font-bold mt-2">R$ {produto.preco.toFixed(2)}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Ingredientes</h3>
-            <ul className="list-disc list-inside text-gray-600">
-              <li>Tapioca</li>
-              <li>Frango</li>
-              <li>Bacon</li>
-              <li>Queijo</li>
-            </ul>
-          </div>
-          <button className="w-full bg-yellow-500 text-white py-2 rounded-lg mt-4 hover:bg-yellow-600 transition-colors">
-            Adicionar à Sacola
-          </button>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 
