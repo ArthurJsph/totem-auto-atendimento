@@ -1,21 +1,55 @@
-
-
 import { Link } from "react-router-dom";
 
 export default function Navbar() {
   return (
-    <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
-      {/* Logo */}
-      <Link to="/" className="text-2xl font-bold text-orange-500">
-        2 Tempos Café
-      </Link>
+    <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between">
+      {/* Logo à esquerda */}
+      <div className="flex-1 flex items-center">
+        <img
+          src="src/assets/logo.png"
+          alt="imagem login"
+          className="object-cover h-10 w-auto"
+        />
+      </div>
 
-      {/* Links de navegação */}
-      <div className="space-x-6 text-gray-700 font-medium">
-        <Link to="/" className="hover:text-orange-500 transition-colors">Home</Link>
-        <Link to="/produtos" className="hover:text-orange-500 transition-colors">Produtos</Link>
-        <Link to="/sobre" className="hover:text-orange-500 transition-colors">Sobre</Link>
-        <Link to="/login" className="hover:text-orange-500 transition-colors">Login</Link>
+      {/* Links centralizados */}
+      <div className="flex-1 flex justify-center">
+        <div className="space-x-6 text-gray-700 font-medium">
+          <Link
+            to="/"
+            className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
+          >
+            Home
+          </Link>
+          <Link
+            to="/pedido" // altere para o caminho correto da rota de pedidos
+            className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
+          >
+            Pedidos
+          </Link>
+          <Link
+            to="/sobre"
+            className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
+          >
+            Sobre
+          </Link>
+        </div>
+      </div>
+
+      {/* Botões à direita */}
+      <div className="flex-1 flex justify-end items-center space-x-4">
+        <Link
+          to="/login"
+          className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition"
+        >
+          Entrar
+        </Link>
+        <Link
+          to="/registrar"
+          className="border border-red-700 text-red-700 px-4 py-2 rounded hover:bg-red-50 transition"
+        >
+          Criar Conta
+        </Link>
       </div>
     </nav>
   );

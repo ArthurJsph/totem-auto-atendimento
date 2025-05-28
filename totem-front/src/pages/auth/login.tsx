@@ -1,5 +1,11 @@
 import React, { useState } from "react";
+
 import { login } from "../../service/auth";
+
+
+import { Link } from "react-router-dom";
+
+
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -20,9 +26,10 @@ function Login() {
     });
   };
 
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex flex-1 md:flex-row">
+    <div className="flex h-screen overflow-hidden">
+      <div className="flex flex-1 md:flex-row w-full">
         <div className="hidden md:flex w-[80%] bg-gray-100 items-center justify-center">
           <img
             src="src/assets/login.png"
@@ -61,7 +68,7 @@ function Login() {
                     type="password"
                     placeholder="Senha"
                     name="senha"
-                    className="pl-10 pr-10 py-2 w-full rounded-lg bg-gray-100 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="pl-10 pr-10 py-2 w-full rounded-lg bg-gray-100 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     required
@@ -97,14 +104,15 @@ function Login() {
               </button>
 
               <div className="flex justify-between items-center mt-2">
-                <a
-                  href="/Esquecer-Senha"
+                <Link
+                  to="/recuperar"
                   className="text-blue-600 hover:underline text-sm"
                 >
                   Esqueci minha senha
-                </a>
+                </Link>
               </div>
             </form>
+
 
             <a
               href="/registrar"
