@@ -21,12 +21,14 @@ export default function Navbar() {
           >
             Home
           </Link>
+
           <Link
             to="/pedido" // altere para o caminho correto da rota de pedidos
             className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
           >
             Pedidos
           </Link>
+
           <Link
             to="/sobre"
             className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"

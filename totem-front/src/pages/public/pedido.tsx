@@ -141,7 +141,7 @@ const Pedido = () => {
     <><div className="max-w-full mx-auto h-full flex flex-col">
       {step === 1 && (
         <div className="flex flex-col h-full">
-          <h2 className="text-3xl font-semibold mb-10 text-gray-800">
+          <h2 className="text-3xl font-bold mb-6">
             Confirme seu pedido
           </h2>
           <div className="flex flex-grow border border-gray-300 rounded-lg overflow-hidden shadow-sm">
