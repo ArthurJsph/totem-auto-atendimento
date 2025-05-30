@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from "react-router-dom";
 
 const Pedido = () => {
   const [step, setStep] = useState(1); 
@@ -328,15 +329,16 @@ const Pedido = () => {
               >
                 Voltar
               </button>
-              <button
-                type="submit"
-                disabled={!isClienteValido}
-                className={`px-12 py-5 rounded-lg font-bold text-white transition ${isClienteValido
-                    ? "bg-yellow-500 hover:bg-yellow-600"
-                    : "bg-yellow-300 cursor-not-allowed"}`}
-              >
-                Continuar para pagamento
-              </button>
+               <Link
+  to={isClienteValido ? "/pagamento" : "#"}
+  className={`px-12 py-5 rounded-lg font-bold text-white transition text-center ${
+    isClienteValido
+      ? "bg-yellow-500 hover:bg-yellow-600"
+      : "bg-yellow-300 cursor-not-allowed pointer-events-none"
+  }`}
+>
+  Continuar para pagamento
+</Link>
             </div>
           </form>
         )}

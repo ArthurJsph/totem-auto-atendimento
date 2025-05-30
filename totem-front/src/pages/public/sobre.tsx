@@ -37,8 +37,7 @@ const Sobre = () => {
             <img
               alt="Ambiente interno do restaurante"
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="src/assets/ambiente.jpeg
-              "
+              src="src/assets/ambiente.jpeg"
             />
             <img
               alt="Croissant francês amanteigado."

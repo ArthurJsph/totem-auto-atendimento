@@ -7,10 +7,10 @@ const registrar = () => {
       {/* Lado da imagem */}
       <section className="hidden md:block md:w-1/2 bg-gradient-to-tr from-green-600 to-green-400 relative">
         <img
-          alt="Imagem de restaurante moderno com ambiente acolhedor, mesas arrumadas, iluminação quente e plantas decorativas"
+          alt="Imagem de restaurante moderno com ambiente acolhedor"
           className="object-cover w-full h-full"
           height="800"
-          src="https://storage.googleapis.com/a1aa/image/9800f8f0-2a98-4d36-a82c-5735976a961a.jpg"
+          src="src/assets/registrar.jpeg"
           width="600"
         />
         <div className="absolute bottom-6 left-6 text-white">

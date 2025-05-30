@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Coffee, Wallet } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 export default function CafeteriaPayment() {
   const [selectedPayment, setSelectedPayment] = useState<'credit' | 'debit' | 'pix' | 'cash' | null>(null);
@@ -185,10 +186,13 @@ export default function CafeteriaPayment() {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-between">
-            <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors">
-              Voltar
-            </button>
+           <div className="flex justify-between">
+   <Link
+    to="/pedido"
+    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors"
+  >
+    Voltar
+  </Link>
             <button
               onClick={handlePaymentSubmit}
               disabled={isSubmitDisabled}
