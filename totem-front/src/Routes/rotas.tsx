@@ -12,15 +12,37 @@ import Registrar from "../pages/auth/registrar";
 import Layout from "../components/layout/layout";
 import Recuperar from "../pages/auth/recuperar";
 import Sobre from "../pages/public/sobre";
+import Manager from "../pages/private/manager";
+import RedirectByRole from "./redirectByRole";
+import PrivateRoute from "./PrivateRoute";
+import Admin from "../pages/private/admin";
 const Rotas = () => {
     return (
       <Router>
         <Routes>
           <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/redirect" element={<RedirectByRole />} />
           <Route path="/sobre" element={<Layout><Sobre /></Layout>}/>
+         <Route
+          path="/manager"
+          element={
+            <PrivateRoute allowedRoles={["MANAGER", "ADMIN"]}>
+              <Manager />
+            </PrivateRoute>
+          }
+        />
+        <Route
+  path="/admin"
+  element={
+    <PrivateRoute allowedRoles={["ADMIN"]}>
+      <Admin />
+    </PrivateRoute>
+  }
+/>
+
           <Route path="/pagamento" element={<CafeteriaPayment />} />
           <Route path="/registrar" element={<Layout><Registrar /></Layout>} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Layout><Login /></Layout>} />
           <Route path="/produto" element={<Produto />} />
           <Route path="/cardapio" element={<Cardapio />} />
           <Route path="/pedido" element={<Layout><Pedido /></Layout>} />

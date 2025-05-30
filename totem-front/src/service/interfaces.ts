@@ -8,13 +8,15 @@ export interface Product {
   createdAt?: string;
   updatedAt?: string;
   restaurantId?: string | number;
-  menuCategoryId?: string | number;
+  menuCategoryId?: number;
   price?: number;
 }
 
 export interface User {
   id?: string | number;
   name: string;
+  phone?: string;
+  cpf?: string;
   email: string;
   password?: string;
   role?: string;

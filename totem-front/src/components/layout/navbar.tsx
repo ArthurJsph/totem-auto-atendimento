@@ -1,6 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getToken, logout } from "../../service/auth";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setLoggedIn(!!getToken());
+  }, []);
+
+  function handleLogout() {
+    logout();
+    setLoggedIn(false);
+    navigate("/login");
+  }
+
   return (
     <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between">
       {/* Logo à esquerda */}
@@ -23,7 +38,7 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/pedido" // altere para o caminho correto da rota de pedidos
+            to="/pedido"
             className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
           >
             Pedidos
@@ -40,20 +55,30 @@ export default function Navbar() {
 
       {/* Botões à direita */}
       <div className="flex-1 flex justify-end items-center space-x-4">
-        <Link
-          to="/login"
-          className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition"
-        >
-          Entrar
-        </Link>
-        <Link
-          to="/registrar"
-          className="border border-red-700 text-red-700 px-4 py-2 rounded hover:bg-red-50 transition"
-        >
-          Criar Conta
-        </Link>
+        {!loggedIn ? (
+          <>
+            <Link
+              to="/login"
+              className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition"
+            >
+              Entrar
+            </Link>
+            <Link
+              to="/registrar"
+              className="border border-red-700 text-red-700 px-4 py-2 rounded hover:bg-red-50 transition"
+            >
+              Criar Conta
+            </Link>
+          </>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition"
+          >
+            Sair
+          </button>
+        )}
       </div>
     </nav>
   );
 }
-

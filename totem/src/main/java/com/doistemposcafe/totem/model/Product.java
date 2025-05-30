@@ -37,12 +37,15 @@ public class Product {
     private LocalDateTime updated_at;
 
     // Belongs to a restaurant
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
     // Belongs to a menu category
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "menu_category_id")
     private MenuCategory menuCategory;
+
 
     // One product can have many order items
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

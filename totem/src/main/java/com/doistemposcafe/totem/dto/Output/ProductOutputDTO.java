@@ -13,4 +13,4 @@ public record ProductOutputDTO(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         Long restaurantId,
-        String menuCategoryId) {}
+        Long menuCategoryId) {}

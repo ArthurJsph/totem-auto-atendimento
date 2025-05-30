@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { login } from "../../service/auth";
-
-
 import { Link } from "react-router-dom";
 
 
 
 function Login() {
+
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [lembrar, setLembrar] = useState(false);
@@ -15,14 +15,13 @@ function Login() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    login(email, senha).then((response) => {
-      console.log("Login bem sucedido:", response);
-
+    login(email, senha).then(() => {
+  
       // Salva email e senha no localStorage
       localStorage.setItem("email", email);
       localStorage.setItem("senha", senha);
 
-      // Redirecionar ou outras ações aqui, se quiser
+       navigate("/redirect");
     });
   };
 
