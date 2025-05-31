@@ -16,6 +16,8 @@ import Manager from "../pages/private/manager";
 import RedirectByRole from "./redirectByRole";
 import PrivateRoute from "./PrivateRoute";
 import Admin from "../pages/private/admin";
+import DetalhesProduto from "../pages/public/DetalhesProduto";
+
 const Rotas = () => {
     return (
       <Router>
@@ -49,6 +51,17 @@ const Rotas = () => {
           <Route path="*" element={<Error404 />} />
           <Route path="/unauthorized" element={<Error401 />} />
           <Route path="/recuperar" element={<Layout><Recuperar /></Layout>} />
+          <Route path="/detalhes/:id" element={<Layout><DetalhesProduto /></Layout>} />
+          
+          {/* Rotas privadas */}
+          {/* <Route
+            path="/private"
+            element={
+              <PrivateRoute allowedRoles={["USER", "ADMIN"]}>
+                <PrivatePage />
+              </PrivateRoute>
+            }
+          {/* Rotas públicas */}
         </Routes>
       </Router>
     );

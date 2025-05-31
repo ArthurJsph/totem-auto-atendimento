@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const produtos = [
   {
@@ -77,6 +78,7 @@ const Produto = () => {
   });
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNovoProduto({ ...novoProduto, [e.target.name]: e.target.value });
@@ -237,9 +239,10 @@ const Produto = () => {
               key={produto.id}
               className={
                 viewMode === "grid"
-                  ? "bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform"
-                  : "bg-white rounded-lg shadow-md overflow-hidden flex"
+                  ? "bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform cursor-pointer"
+                  : "bg-white rounded-lg shadow-md overflow-hidden flex cursor-pointer"
               }
+              onClick={() => navigate(`/produtos/${produto.id}`)}
             >
               <img
                 src={produto.imagem}

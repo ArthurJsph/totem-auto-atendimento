@@ -10,7 +10,7 @@ const Sobre = () => {
         <div className="flex flex-col md:flex-row md:space-x-12 items-center md:items-start">
           <div className="md:w-1/2 space-y-6 text-gray-700 text-lg leading-relaxed">
             <p>
-              Bem-vindo ao <span className="font-bold text-yellow-600">2 Tempos Café</span>, o seu lugar favorito para saborear os melhores lanches e cafés da cidade. Fundado em xxxx, nosso restaurante tem como missão oferecer produtos frescos, saborosos e feitos com carinho para você e sua família.
+              Bem-vindo ao <span className="font-bold text-yellow-600">2 Tempos Café</span>, o seu lugar favorito para saborear os melhores lanches e cafés da cidade. Fundado em 2014, nosso restaurante tem como missão oferecer produtos frescos, saborosos e feitos com carinho para você e sua família.
             </p>
             <p>
               Nosso cardápio é cuidadosamente elaborado para agradar todos os gostos, desde os clássicos sanduíches até opções especiais e exclusivas. Além disso, nosso café é selecionado das melhores regiões produtoras, garantindo aroma e sabor incomparáveis.
