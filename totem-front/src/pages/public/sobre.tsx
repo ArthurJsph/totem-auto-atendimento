@@ -25,14 +25,14 @@ const Sobre = () => {
 
           <div className="md:w-1/2 mt-10 md:mt-0 grid grid-cols-2 gap-6">
             <img
-              alt="Tradicional pão de queijo mineiro."
+              alt="Tradicional pão de queijo recheado."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src= "/imagens/pao-de-queijo.jpg"
+              src= "src/assets/pao-queijo-recheado.jpg"
             />
             <img
-              alt="Café espresso encorpado e aromático."
+              alt="Cappuccino encorpado e aromático."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="/imagens/cafe-espresso.jpg"
+              src="src/assets/cappuccino.jpg"
             />
             <img
               alt="Ambiente interno do restaurante"
@@ -40,9 +40,9 @@ const Sobre = () => {
               src="src/assets/ambiente.jpeg"
             />
             <img
-              alt="Croissant francês amanteigado."
+              alt="Delioso Wrap de frango."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="/imagens/croissant.jpg"
+              src="src/assets/wrap-frango.jpg"
             />
           </div>
         </div>
