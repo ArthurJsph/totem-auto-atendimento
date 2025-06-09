@@ -10,19 +10,14 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
   const token = getToken();
-  const roles = getUserRoles();
-
-  // Se não estiver logado, vai para login
+  const roles = getUserRoles();  
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-
-  // Se não tiver nenhuma das roles permitidas, vai para 401
   const hasAccess = roles.some(role => allowedRoles.includes(role));
   if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
-
   return <>{children}</>;
 };
 

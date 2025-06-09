@@ -1,59 +1,25 @@
-import { useEffect, useState } from 'react';
-import { getAllOrders } from '../../service/order';
-import { getAllProducts } from '../../service/product';
-import { Order, Product } from '../../service/interfaces';
+// src/pages/Pedido.tsx (seu código atualizado, com foco no botão)
+import { useState } from 'react';
+import { useCart } from '../../context/CartContext';
+import { useNavigate } from 'react-router-dom'; // Importe useNavigate
 
 const Pedido = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { cartItems, getCartTotal } = useCart();
 
-  // Dados do cliente e pagamento (igual ao seu código)
-  // ...
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const [ordersData, productsData] = await Promise.all([getAllOrders(), getAllProducts()]);
-        setOrders(ordersData);
-        setProducts(productsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Erro ao carregar pedido e produtos:', error);
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  // Combinar orders com produtos para renderizar
-  // Para cada order, encontrar o produto correspondente para mostrar nome, preço e imagem
-  const pedido = orders.map(order => {
-    const produto = products.find(p => String(p.id) === String(order.productId));
+  const pedido = cartItems.map(item => {
     return {
-      id: order.id,
-      nome: produto?.name || 'Produto não encontrado',
-      descricao: produto?.description || '',
-      quantidade: order.quantity || 0,
-      precoUnitario: produto?.price || 0,
-      imagem: produto?.imageUrl || '', // Ajuste conforme campo correto no produto
+      id: item.id,
+      nome: item.name || 'Produto não encontrado',
+      descricao: item.description || '',
+      quantidade: item.quantity,
+      precoUnitario: item.price || 0,
+      imagem: item.imageUrl || '',
     };
   });
 
-  const totalPedido = pedido.reduce(
-    (acc, item) => acc + item.precoUnitario * item.quantidade,
-    0
-  );
-
-  // Validadores, handlers, funções formatadoras continuam iguais (cliente, pagamento)...
-
-  // JSX continua igual, só muda o pedido para o que vem do backend
-
-  if (loading) {
-    return <p>Carregando pedido...</p>;
-  }
+  const totalPedido = getCartTotal();
 
   return (
     <>
@@ -97,7 +63,8 @@ const Pedido = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setStep(2)}
+                  // *** AQUI É A PARTE QUE REDIRECIONA ***
+                  onClick={() => navigate("/pedido/pagamento")}
                   className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-5 rounded-lg shadow-lg transition"
                   disabled={pedido.length === 0}
                 >
@@ -108,8 +75,6 @@ const Pedido = () => {
           </div>
         )}
       </div>
-      {/* Formulário dos dados do cliente e demais steps continuam igual */}
-      {/* ... */}
     </>
   );
 };

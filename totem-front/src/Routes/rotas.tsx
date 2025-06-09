@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Home from "../pages/public/home";
-import CafeteriaPayment from "../pages/public/tipopagamento";
+import CafeteriaPayment from "../pages/public/pagamento";
 import Cardapio from "../pages/public/cardapio";
 import Produto from "../pages/public/produto";
 import Error404 from "../pages/error/404";
@@ -16,40 +16,42 @@ import Manager from "../pages/private/manager";
 import RedirectByRole from "./redirectByRole";
 import PrivateRoute from "./PrivateRoute";
 import Admin from "../pages/private/admin";
+import { CartProvider } from '../context/CartContext';
 const Rotas = () => {
     return (
       <Router>
-        <Routes>
-          <Route path="/" element={<Layout><Home /></Layout>} />
-          <Route path="/redirect" element={<RedirectByRole />} />
-          <Route path="/sobre" element={<Layout><Sobre /></Layout>}/>
-         <Route
-          path="/manager"
-          element={
-            <PrivateRoute allowedRoles={["MANAGER", "ADMIN"]}>
-              <Manager />
-            </PrivateRoute>
-          }
-        />
-        <Route
-  path="/admin"
-  element={
-    <PrivateRoute allowedRoles={["ADMIN"]}>
-      <Admin />
-    </PrivateRoute>
-  }
-/>
-
-          <Route path="/pagamento" element={<CafeteriaPayment />} />
-          <Route path="/registrar" element={<Layout><Registrar /></Layout>} />
-          <Route path="/login" element={<Layout><Login /></Layout>} />
-          <Route path="/produto" element={<Produto />} />
-          <Route path="/cardapio" element={<Cardapio />} />
-          <Route path="/pedido" element={<Layout><Pedido /></Layout>} />
-          <Route path="*" element={<Error404 />} />
-          <Route path="/unauthorized" element={<Error401 />} />
-          <Route path="/recuperar" element={<Layout><Recuperar /></Layout>} />
-        </Routes>
+        <CartProvider>
+          <Routes>
+            <Route path="/" element={<Layout><Home /></Layout>} />
+            <Route path="/pedido" element={<Layout><Pedido /></Layout>} />
+            <Route path="/redirect" element={<RedirectByRole />} />
+            <Route path="/sobre" element={<Layout><Sobre /></Layout>}/>
+            <Route
+              path="/manager"
+              element={
+                <PrivateRoute allowedRoles={["MANAGER", "ADMIN"]}>
+                  <Manager />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute allowedRoles={["ADMIN"]}>
+                  <Admin />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/pedido/pagamento" element={<CafeteriaPayment />} />
+            <Route path="/registrar" element={<Layout><Registrar /></Layout>} />
+            <Route path="/login" element={<Layout><Login /></Layout>} />
+            <Route path="/produto" element={<Produto />} />
+            <Route path="/cardapio" element={<Cardapio />} />
+            <Route path="*" element={<Error404 />} />
+            <Route path="/unauthorized" element={<Error401 />} />
+            <Route path="/recuperar" element={<Layout><Recuperar /></Layout>} />
+          </Routes>
+        </CartProvider>
       </Router>
     );
   };

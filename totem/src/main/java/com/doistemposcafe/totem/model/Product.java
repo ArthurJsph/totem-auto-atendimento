@@ -28,13 +28,13 @@ public class Product {
     private Integer amount;
     @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime created_at;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-
+    @Column(name = "updated_at")
     @Temporal(TemporalType.TIMESTAMP)
     @UpdateTimestamp
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 
     // Belongs to a restaurant
     @ManyToOne(fetch = FetchType.LAZY)

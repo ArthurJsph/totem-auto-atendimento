@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Sobre = () => {
   return (
     <main className="flex-grow w-full max-w-7xl mx-auto px-6 py-12">

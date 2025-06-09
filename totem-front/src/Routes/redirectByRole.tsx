@@ -5,10 +5,8 @@ import { getMainRole, getToken, isTokenExpired } from "../service/auth";
 
 const RedirectByRole = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     const token = getToken();
-
     if (!token || isTokenExpired()) {
       navigate("/login");
       return;
@@ -19,7 +17,6 @@ const RedirectByRole = () => {
     else if (role === "MANAGER") navigate("/manager");
     else navigate("/"); 
   }, [navigate]);
-
   return null; 
 };
 

@@ -11,7 +11,7 @@ export async function getAllMenus() {
     }
 }
 
-export async function getMenuById(id: string | number) {
+export async function getMenuById(id: number) {
     try {
         const response = await api.get(`/menu-categories/list/${id}`);
         return response.data;
@@ -41,7 +41,7 @@ export async function updateMenu(menu: MenuCategory) {
     }
 }
 
-export async function deleteMenu(id: string | number) {
+export async function deleteMenu(id: number) {
     try {
         const response = await api.delete(`/menu-categories/delete/${id}`);
         return response.data;
