@@ -54,6 +54,6 @@ const Rotas = () => {
         </CartProvider>
       </Router>
     );
-  };
+}
   
   export default Rotas;

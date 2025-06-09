@@ -1,11 +1,9 @@
-// src/pages/Pedido.tsx (seu código atualizado, com foco no botão)
-import { useState } from 'react';
 import { useCart } from '../../context/CartContext';
-import { useNavigate } from 'react-router-dom'; // Importe useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
 const Pedido = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  // const [step, setStep] = useState(1);
   const { cartItems, getCartTotal } = useCart();
 
   const pedido = cartItems.map(item => {
@@ -24,8 +22,7 @@ const Pedido = () => {
   return (
     <>
       <div className="max-w-full mx-auto h-full flex flex-col">
-        {step === 1 && (
-          <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
             <h2 className="text-3xl font-bold mb-6">Confirme seu pedido</h2>
             <div className="flex flex-grow border border-gray-300 rounded-lg overflow-hidden shadow-sm">
               <section className="w-2/3 overflow-auto p-10 bg-gray-50">
@@ -63,7 +60,6 @@ const Pedido = () => {
                   </p>
                 </div>
                 <button
-                  // *** AQUI É A PARTE QUE REDIRECIONA ***
                   onClick={() => navigate("/pedido/pagamento")}
                   className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-5 rounded-lg shadow-lg transition"
                   disabled={pedido.length === 0}
@@ -73,6 +69,16 @@ const Pedido = () => {
               </aside>
             </div>
           </div>
+          {pedido.length === 0 && (
+            <div className="mt-10 text-center">
+              <p className="text-lg text-gray-500">Seu carrinho está vazio.</p>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg"
+              >
+                Voltar para o menu
+              </button>
+            </div>
         )}
       </div>
     </>

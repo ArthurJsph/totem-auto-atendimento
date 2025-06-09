@@ -1,68 +1,69 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const produtos = [
   {
     id: 1,
-    nome: "Café Espresso",
-    descricao: "Café espresso encorpado e aromático.",
+    nome: "Café Expresso",
+    descricao: "Café expresso encorpado e aromático.",
     preco: 6.5,
-    imagem: "/imagens/cafe-espresso.jpg",
+    imagem: "src/assets/cafe-expresso.jpg",
   },
   {
     id: 2,
     nome: "Cappuccino",
     descricao: "Café com leite vaporizado e espuma cremosa.",
     preco: 8.0,
-    imagem: "/imagens/cappuccino.jpg",
+    imagem: "src/assets/cappuccino.jpg",
   },
   {
     id: 3,
-    nome: "Pão de Queijo",
-    descricao: "Tradicional pão de queijo mineiro.",
+    nome: "Pão de Queijo Recheado",
+    descricao: "Tradicional pão de queijo recheado.",
     preco: 4.0,
-    imagem: "/imagens/pao-de-queijo.jpg",
+    imagem: "src/assets/pao-queijo-recheado.jpg",
   },
   {
     id: 4,
-    nome: "Bolo de Cenoura",
-    descricao: "Bolo de cenoura com cobertura de chocolate.",
+    nome: "Cheesecake de Frutas",
+    descricao: "Cheesecake com cobertura de Frutas.",
     preco: 7.0,
-    imagem: "/imagens/bolo-cenoura.jpg",
+    imagem: "src/assets/cheesecake-frutas.jpg",
   },
   {
     id: 5,
-    nome: "Mocha",
+    nome: "Mocha Gelado",
     descricao: "Café com chocolate e leite vaporizado.",
     preco: 9.0,
-    imagem: "/imagens/mocha.jpg",
+    imagem: "src/assets/mocha-gelado.jpg",
   },
   {
     id: 6,
-    nome: "Croissant",
-    descricao: "Croissant francês amanteigado.",
+    nome: "Wrap de Frango",
+    descricao: "Wrap recheado com frango.",
     preco: 5.5,
-    imagem: "/imagens/croissant.jpg",
+    imagem: "src/assets/wrap-frango.jpg",
   },
   {
     id: 7,
-    nome: "Latte",
+    nome: "Latte macchiato",
     descricao: "Café espresso com leite vaporizado.",
     preco: 7.5,
-    imagem: "/imagens/latte.jpg",
+    imagem: "src/assets/latte-macchiato.jpg",
   },
   {
     id: 8,
     nome: "Torta de Limão",
     descricao: "Torta de limão com merengue.",
     preco: 8.5,
-    imagem: "/imagens/torta-limao.jpg",
+    imagem: "src/assets/torta-limao.jpg",
   },
   {
     id: 9,
-    nome: "Chocolate Quente",
-    descricao: "Bebida quente de chocolate cremoso.",
+    nome: "Muffin de Blueberry",
+    descricao: "Delicioso Maffuin de blueberry.",
     preco: 6.0,
-    imagem: "/imagens/chocolate-quente.jpg",
+    imagem: "src/assets/muffin-blueberry.jpg",
   },
 ];
 
@@ -77,6 +78,7 @@ const Produto = () => {
   });
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNovoProduto({ ...novoProduto, [e.target.name]: e.target.value });
@@ -237,9 +239,10 @@ const Produto = () => {
               key={produto.id}
               className={
                 viewMode === "grid"
-                  ? "bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform"
-                  : "bg-white rounded-lg shadow-md overflow-hidden flex"
+                  ? "bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform cursor-pointer"
+                  : "bg-white rounded-lg shadow-md overflow-hidden flex cursor-pointer"
               }
+              onClick={() => navigate(`/produtos/${produto.id}`)}
             >
               <img
                 src={produto.imagem}

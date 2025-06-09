@@ -8,7 +8,7 @@ const Sobre = () => {
         <div className="flex flex-col md:flex-row md:space-x-12 items-center md:items-start">
           <div className="md:w-1/2 space-y-6 text-gray-700 text-lg leading-relaxed">
             <p>
-              Bem-vindo ao <span className="font-bold text-yellow-600">2 Tempos Café</span>, o seu lugar favorito para saborear os melhores lanches e cafés da cidade. Fundado em xxxx, nosso restaurante tem como missão oferecer produtos frescos, saborosos e feitos com carinho para você e sua família.
+              Bem-vindo ao <span className="font-bold text-yellow-600">2 Tempos Café</span>, o seu lugar favorito para saborear os melhores lanches e cafés da cidade. Fundado em 2014, nosso restaurante tem como missão oferecer produtos frescos, saborosos e feitos com carinho para você e sua família.
             </p>
             <p>
               Nosso cardápio é cuidadosamente elaborado para agradar todos os gostos, desde os clássicos sanduíches até opções especiais e exclusivas. Além disso, nosso café é selecionado das melhores regiões produtoras, garantindo aroma e sabor incomparáveis.
@@ -23,14 +23,14 @@ const Sobre = () => {
 
           <div className="md:w-1/2 mt-10 md:mt-0 grid grid-cols-2 gap-6">
             <img
-              alt="Tradicional pão de queijo mineiro."
+              alt="Tradicional pão de queijo recheado."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src= "/imagens/pao-de-queijo.jpg"
+              src= "src/assets/pao-queijo-recheado.jpg"
             />
             <img
-              alt="Café espresso encorpado e aromático."
+              alt="Cappuccino encorpado e aromático."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="/imagens/cafe-espresso.jpg"
+              src="src/assets/cappuccino.jpg"
             />
             <img
               alt="Ambiente interno do restaurante"
@@ -38,9 +38,9 @@ const Sobre = () => {
               src="src/assets/ambiente.jpeg"
             />
             <img
-              alt="Croissant francês amanteigado."
+              alt="Delioso Wrap de frango."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="/imagens/croissant.jpg"
+              src="src/assets/wrap-frango.jpg"
             />
           </div>
         </div>
