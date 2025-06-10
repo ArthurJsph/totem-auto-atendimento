@@ -1,52 +1,23 @@
-import { useEffect, useState } from 'react';
-import { getAllProducts } from '../../service/product';
-import { Product } from '../../service/interfaces';
-import { useCart, CartItem } from '../../context/CartContext'; // Importe useCart e CartItem
-import { Link } from 'react-router-dom'; // Assumindo que você usa react-router-dom para navegação
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useProducts } from '../../hooks';
 
 const images = import.meta.glob('../../assets/*', { eager: true });
 
-const categories = [
-  { id: 0, label: 'Todos' },
-  { id: 1, label: 'Bebidas' },
-  { id: 2, label: 'Sobremesas' },
-  { id: 3, label: 'Lanches' },
-  { id: 4, label: 'Almoço' },
-];
-
-const Home = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<number>(0);
-  const [isCartOpen, setIsCartOpen] = useState(false); 
-
-  const { cartItems, addToCart, removeFromCart, updateQuantity, getCartTotal } = useCart();
-
-  useEffect(() => {
-    getAllProducts()
-      .then((data) => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar produtos:', error);
-        setProducts([]);
-        setLoading(false);
-      });
-  }, []);
-
-  const filteredProducts =
-    categoryFilter === 0
-      ? products
-      : products.filter(
-          (product) => product.menuCategoryId != null && Number(product.menuCategoryId) === categoryFilter
-        );
-
-  const handleUpdateQuantity = (item: CartItem, delta: number) => {
-    if (typeof item.id === 'number') {
-      updateQuantity(item.id, item.quantity + delta);
-    }
-  };
+const Home: React.FC = () => {
+  const {
+    loading,
+    categoryFilter,
+    setCategoryFilter,
+    filteredProducts,
+    isCartOpen,
+    setIsCartOpen,
+    cartItems,
+    addToCart,
+    getCartTotal,
+    handleUpdateCartItemQuantity,
+    categories,
+  } = useProducts();
 
   return (
     <div className="container mx-auto p-4 relative">
@@ -75,6 +46,7 @@ const Home = () => {
           </span>
           <span className="ml-2">R$ {getCartTotal().toFixed(2)}</span>
         </button>
+
         {isCartOpen && (
           <div className="absolute top-0 right-0 mt-0 w-80 bg-white border border-gray-300 rounded-lg shadow-xl p-4 overflow-y-auto max-h-[80vh]">
             <h3 className="text-xl font-bold mb-4">Seu Carrinho</h3>
@@ -95,21 +67,21 @@ const Home = () => {
                         <p className="text-gray-600">R$ {item.price?.toFixed(2)}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <button
-                            onClick={() => handleUpdateQuantity(item, -1)}
+                            onClick={() => handleUpdateCartItemQuantity(item, -1)}
                             className="bg-gray-200 text-gray-700 px-2 py-1 rounded"
                           >
                             -
                           </button>
                           <span>{item.quantity}</span>
                           <button
-                            onClick={() => handleUpdateQuantity(item, 1)}
+                            onClick={() => handleUpdateCartItemQuantity(item, 1)}
                             className="bg-gray-200 text-gray-700 px-2 py-1 rounded"
                           >
                             +
                           </button>
                           <button
                             onClick={() => {
-                              if (typeof item.id === 'number') removeFromCart(item.id);
+                              if (typeof item.id === 'number') handleUpdateCartItemQuantity(item, -item.quantity); // Remove todos do item
                             }}
                             className="ml-auto text-red-500 hover:text-red-700 text-sm"
                           >
@@ -137,8 +109,6 @@ const Home = () => {
           </div>
         )}
       </div>
-
-      {/* Filtros */}
       <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center">
         <div className="flex gap-3 flex-wrap">
           {categories.map((cat) => (
@@ -157,7 +127,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Lista de Produtos */}
       {loading ? (
         <p>Carregando produtos...</p>
       ) : (
@@ -165,7 +134,7 @@ const Home = () => {
           {filteredProducts.length === 0 ? (
             <p>Nenhum produto encontrado.</p>
           ) : (
-            filteredProducts.map((product: Product) => {
+            filteredProducts.map((product) => {
               const imgSrc = (images[`../../assets/${product.imageUrl}`] as { default: string })?.default;
               const itemInCart = cartItems.find((item) => item.id === product.id);
 
@@ -184,14 +153,14 @@ const Home = () => {
                   {itemInCart ? (
                     <div className="flex items-center justify-between mt-auto">
                       <button
-                        onClick={() => handleUpdateQuantity(itemInCart, -1)}
+                        onClick={() => handleUpdateCartItemQuantity(itemInCart, -1)}
                         className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded"
                       >
                         -
                       </button>
                       <span className="font-bold text-lg">{itemInCart.quantity}</span>
                       <button
-                        onClick={() => handleUpdateQuantity(itemInCart, 1)}
+                        onClick={() => handleUpdateCartItemQuantity(itemInCart, 1)}
                         className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded"
                       >
                         +
@@ -213,6 +182,6 @@ const Home = () => {
       )}
     </div>
   );
-}
+};
 
 export default Home;

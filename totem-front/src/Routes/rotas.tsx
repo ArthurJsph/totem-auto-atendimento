@@ -1,59 +1,62 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-import Home from "../pages/public/home";
-import CafeteriaPayment from "../pages/public/pagamento";
-import Cardapio from "../pages/public/cardapio";
-import Produto from "../pages/public/produto";
-import Error404 from "../pages/error/404";
-import Pedido from "../pages/public/pedido";
-import Error401 from "../pages/error/401";
-import Login from "../pages/auth/login";
-import Registrar from "../pages/auth/registrar";
-import Layout from "../components/layout/layout";
-import Recuperar from "../pages/auth/recuperar";
-import Sobre from "../pages/public/sobre";
-import Manager from "../pages/private/manager";
-import RedirectByRole from "./redirectByRole";
-import PrivateRoute from "./PrivateRoute";
-import Admin from "../pages/private/admin";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from '../pages/public/home';
+import Produto from '../pages/public/produto';
+import Pedido from '../pages/public/pedido';
+import CafeteriaPayment from '../pages/public/pagamento';
+import Sobre from '../pages/public/sobre';
+import Login from '../pages/auth/login';
+import Registrar from '../pages/auth/registrar';
+import Recuperar from '../pages/auth/recuperar';
+import Manager from '../pages/private/manager';
+import Admin from '../pages/private/admin'; 
+import Error404 from '../pages/error/404';
+import Error401 from '../pages/error/401';
+import Layout from '../components/layout/layout';
+import RedirectByRole from './redirectByRole';
+import PrivateRoute from './PrivateRoute';
+import PublicRoute from './PublicRoute';
 import { CartProvider } from '../context/CartContext';
+
 const Rotas = () => {
-    return (
-      <Router>
-        <CartProvider>
-          <Routes>
-            <Route path="/" element={<Layout><Home /></Layout>} />
-            <Route path="/pedido" element={<Layout><Pedido /></Layout>} />
-            <Route path="/redirect" element={<RedirectByRole />} />
-            <Route path="/sobre" element={<Layout><Sobre /></Layout>}/>
-            <Route
-              path="/manager"
-              element={
-                <PrivateRoute allowedRoles={["MANAGER", "ADMIN"]}>
-                  <Manager />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <PrivateRoute allowedRoles={["ADMIN"]}>
-                  <Admin />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/pedido/pagamento" element={<CafeteriaPayment />} />
-            <Route path="/registrar" element={<Layout><Registrar /></Layout>} />
-            <Route path="/login" element={<Layout><Login /></Layout>} />
+  return (
+    <Router>
+      <CartProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} /> 
             <Route path="/produto" element={<Produto />} />
-            <Route path="/cardapio" element={<Cardapio />} />
-            <Route path="*" element={<Error404 />} />
-            <Route path="/unauthorized" element={<Error401 />} />
-            <Route path="/recuperar" element={<Layout><Recuperar /></Layout>} />
-          </Routes>
-        </CartProvider>
-      </Router>
-    );
-}
-  
-  export default Rotas;
+            <Route path="/sobre" element={<Sobre />} />
+            <Route path="/pedido" element={<Pedido />} />
+            <Route path="/pedido/pagamento" element={<CafeteriaPayment />} />
+          </Route>
+
+          <Route element={<Layout />}> 
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/registrar" element={<Registrar />} />
+              <Route path="/recuperar" element={<Recuperar />} />
+            </Route>
+          </Route>
+
+          <Route element={<Layout />}>
+            <Route element={<PrivateRoute allowedRoles={["MANAGER", "ADMIN"]} />}>
+              <Route path="/manager" element={<Manager />} />
+            </Route>
+          </Route>
+
+          <Route element={<Layout />}>
+            <Route element={<PrivateRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="/admin" element={<Admin />} />
+            </Route>
+          </Route>
+
+          <Route path="/redirect" element={<RedirectByRole />} />
+          <Route path="/unauthorized" element={<Error401 />} />
+          <Route path="*" element={<Error404 />} /> 
+        </Routes>
+      </CartProvider>
+    </Router>
+  );
+};
+
+export default Rotas;
