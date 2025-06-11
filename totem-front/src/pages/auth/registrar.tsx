@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { register } from "../../service/auth";
-import { User } from "../../service/interfaces";
+import { useEffect } from "react";
+import { useRegister } from "../../hooks"; // Adjust the path as needed
 
 const Registrar = () => {
-  const [formData, setFormData] = useState<Omit<User, "role">>({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    cpf: "",
-  });
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const {
+    formData,
+    confirmPassword,
+    loading,
+    error,
+    success,
+    handleChange,
+    setConfirmPassword,
+    handleSubmit,
+  } = useRegister();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  // Impede rolagem apenas nesta tela
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     const originalHeight = document.body.style.height;
@@ -27,43 +23,6 @@ const Registrar = () => {
       document.body.style.height = originalHeight;
     };
   }, []);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      if (formData.password !== confirmPassword) {
-        setError("As senhas não conferem.");
-        setLoading(false);
-        return;
-      }
-
-      await register({ ...formData, role: "CLIENT" });
-      setSuccess("Registro realizado com sucesso!");
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        phone: "",
-        cpf: "",
-      });
-      setConfirmPassword("");
-    } catch {
-      setError("Falha no registro. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -77,14 +36,21 @@ const Registrar = () => {
       </section>
 
       {/* Formulário ocupa toda a direita, centralizado verticalmente */}
-      <section className="w-full md:w-1/2 h-full flex flex-col justify-center items-center bg-white">
-        <div className="w-full max-w-lg flex flex-col justify-center h-full">
-          <h1 className="text-xl font-semibold text-gray-800 mb-2 text-center md:text-left">
+      <section className="w-full md:w-1/2 h-full flex flex-col justify-center items-center bg-white p-4 sm:p-6 lg:p-8"> {/* Added more padding for larger screens */}
+        {/* Adjusted max-width values and added mx-auto for centering */}
+        <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl mx-auto overflow-y-auto max-h-full">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center md:text-left">
             Registro de Usuário
           </h1>
-          <form onSubmit={handleSubmit} autoComplete="off" className="grid grid-cols-1 md:grid-cols-2 gap-3" noValidate>
+          <form
+            onSubmit={handleSubmit}
+            autoComplete="off"
+            // Changed md:grid-cols-2 to sm:grid-cols-2 to activate two columns earlier
+            className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3" // Increased horizontal gap, slightly reduced vertical
+            noValidate
+          >
             <div>
-              <label htmlFor="name" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-1">
                 Nome Completo
               </label>
               <input
@@ -95,12 +61,12 @@ const Registrar = () => {
                 onChange={handleChange}
                 required
                 placeholder="Digite seu nome completo"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-1">
                 Email
               </label>
               <input
@@ -111,12 +77,12 @@ const Registrar = () => {
                 onChange={handleChange}
                 required
                 placeholder="exemplo@gmail.com"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="phone" className="block text-gray-700 text-sm font-medium mb-1">
                 Telefone
               </label>
               <input
@@ -128,12 +94,12 @@ const Registrar = () => {
                 required
                 pattern="^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$"
                 placeholder="(99) 99999-9999"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="cpf" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="cpf" className="block text-gray-700 text-sm font-medium mb-1">
                 CPF
               </label>
               <input
@@ -145,12 +111,12 @@ const Registrar = () => {
                 required
                 pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                 placeholder="000.000.000-00"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="password" className="block text-gray-700 text-sm font-medium mb-1">
                 Senha
               </label>
               <input
@@ -161,12 +127,12 @@ const Registrar = () => {
                 onChange={handleChange}
                 required
                 placeholder="Crie uma senha segura"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-gray-700 text-sm mb-1">
+              <label htmlFor="confirmPassword" className="block text-gray-700 text-sm font-medium mb-1">
                 Confirme sua senha
               </label>
               <input
@@ -174,24 +140,25 @@ const Registrar = () => {
                 id="confirmPassword"
                 name="confirmPassword"
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 placeholder="Repita a senha"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200"
               />
             </div>
 
+            {/* Changed col-span to sm:col-span-2 to match the grid breakpoint */}
             {error && (
-              <p className="md:col-span-2 text-red-600 text-sm">{error}</p>
+              <p className="sm:col-span-2 text-red-600 text-sm mt-2">{error}</p>
             )}
             {success && (
-              <p className="md:col-span-2 text-red-600 text-sm">{success}</p>
+              <p className="sm:col-span-2 text-green-600 text-sm mt-2">{success}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="md:col-span-2 w-1/2 mx-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md transition disabled:opacity-50"
+              className="sm:col-span-2 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
             >
               {loading ? "Registrando..." : "Registrar"}
             </button>

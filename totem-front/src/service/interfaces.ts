@@ -25,11 +25,15 @@ export interface User {
 }
 
 export interface Order {
-  id?: string | number;
-  userId?: string | number;
+  id?: number;
+  userId:  number;
+  description?: string;
+  restaurantId?: number;
   productId?: string | number;
   quantity?: number;
-  totalPrice?: number;
+  total?: number;
+  price?: number;
+  consumption_method?: string;
   status?: string;
   createdAt?: string;
   updatedAt?: string;

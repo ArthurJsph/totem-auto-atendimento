@@ -1,10 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
 import { getToken, logout } from "../../service/auth";
 import { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth"; // Importa o hook de autenticação
 
 export default function Navbar() {
   const [loggedIn, setLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const { authorities } = useAuth(); // Obtém as autoridades do usuário
+
+  // Verifica se o usuário é admin
+  const isAdmin = authorities.includes("ADMIN");
 
   useEffect(() => {
     setLoggedIn(!!getToken());
@@ -21,7 +26,7 @@ export default function Navbar() {
       {/* Logo à esquerda */}
       <div className="flex-1 flex items-center">
         <img
-          src="src/assets/logo.png"
+          src="src/assets/logo.png" // Verifique o caminho da imagem se ela não aparecer
           alt="imagem login"
           className="object-cover h-10 w-auto"
         />
@@ -43,6 +48,16 @@ export default function Navbar() {
           >
             Pedidos
           </Link>
+
+          {/* Novo Link para o Dashboard, visível apenas para ADMIN */}
+          {isAdmin && (
+            <Link
+              to="/admin" // Caminho para o seu AdminDashboard
+              className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]"
+            >
+              Dashboard
+            </Link>
+          )}
 
           <Link
             to="/sobre"
