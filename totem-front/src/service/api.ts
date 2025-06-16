@@ -21,12 +21,12 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-    (response: AxiosResponse) => response, // Use AxiosResponse aqui
-    (error: AxiosError) => { // Use AxiosError aqui
+    (response: AxiosResponse) => response, 
+    (error: AxiosError) => { 
         if (error.response && error.response.status === 401) {
             console.warn('Erro 401: Token expirado ou não autorizado. Redirecionando para login.');
             localStorage.removeItem('token');
-            window.location.href = '/unauthorized'; // Ou para a sua rota de login
+            window.location.href = '/unauthorized'; 
         } else if (error.response && error.response.status === 403) {
             console.error('Erro 403: Acesso negado. Você não tem permissão para esta ação.');
         }

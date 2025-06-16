@@ -1,5 +1,4 @@
-// src/hooks/useProducts.ts
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'; 
 import { getAllProducts } from '../service/product'; 
 import { Product } from '../service/interfaces'; 
 import { useCart, CartItem } from '../context/CartContext'; 
@@ -29,18 +28,31 @@ export const useProducts = (): UseProductsHook => {
 
   const { cartItems, addToCart, removeFromCart, updateQuantity, getCartTotal } = useCart();
 
+  // Adicionando useRef para controlar se o componente já foi montado
+  const mounted = useRef(false); 
+
   useEffect(() => {
-    getAllProducts()
-      .then((data) => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar produtos:', error);
-        setProducts([]);
-        setLoading(false);
-      });
-  }, []);
+    // Verifica se a flag mounted.current é false.
+    // Isso garante que a requisição só será feita na primeira montagem real do componente,
+    // ignorando a segunda execução do StrictMode.
+    if (!mounted.current) {
+      mounted.current = true; // Marca como montado após a primeira execução
+      
+      getAllProducts()
+        .then((data) => {
+          setProducts(data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar produtos:', error);
+          setProducts([]);
+          setLoading(false);
+        });
+    }
+
+    // O retorno do useEffect é para limpeza, se houvesse algo a ser cancelado (ex: abortar requisição)
+    // Não é estritamente necessário para este caso simples de fetching.
+  }, []); // Array de dependências vazio para rodar apenas uma vez (no StrictMode, duas vezes, mas nosso if impede a segunda)
 
   const filteredProducts = useMemo(() => {
     return categoryFilter === 0

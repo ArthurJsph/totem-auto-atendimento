@@ -16,6 +16,10 @@ import RedirectByRole from './redirectByRole';
 import PrivateRoute from './PrivateRoute';
 import PublicRoute from './PublicRoute';
 import { CartProvider } from '../context/CartContext';
+import FAQ from '../pages/public/faq';
+import PoliticaPrivacidade from '../pages/public/politicaPrivacidade';
+import TermosDeUso from '../pages/public/termosDeUso';
+import Blog from '../pages/public/blog';
 
 const Rotas = () => {
   return (
@@ -28,6 +32,11 @@ const Rotas = () => {
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/pedido" element={<Pedido />} />
             <Route path="/pedido/pagamento" element={<CafeteriaPayment />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/termos-de-uso" element={<TermosDeUso />} />
+            <Route path="/blog" element={<Blog />} />
+
           </Route>
 
           <Route element={<Layout />}> 

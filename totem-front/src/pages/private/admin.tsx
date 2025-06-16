@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-
-// --- Importações de Interfaces (Verifique os caminhos) ---
-import { Product, Order, User } from '../../service/interfaces'; // Importe Order, Product e User
-
-// --- Importações de Serviços (Verifique os caminhos) ---
+import { Product, Order, User } from '../../service/interfaces'; 
 import {
     getAllProducts,
     saveProduct,
@@ -17,7 +12,7 @@ import {
     getAllOrders,
     updateOrder,
     deleteOrder
-} from '../../service/order'; // Este é o service/order.ts
+} from '../../service/order'; 
 
 import {
     getAllUsers,
@@ -27,7 +22,6 @@ import {
 // --- Componente AdminDashboard ---
 const AdminDashboard = () => {
     const { authorities } = useAuth();
-    const navigate = useNavigate();
 
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -85,7 +79,6 @@ const AdminDashboard = () => {
                     name: productData.name,
                     description: productData.description,
                     price: productData.price,
-                    stock: productData.stock,
                     imageUrl: productData.imageUrl
                 };
                 await saveProduct(productToSave); // Use o tipo Omit se seu saveProduct não aceita ID
@@ -217,7 +210,6 @@ const AdminDashboard = () => {
         const [name, setName] = useState(product?.name || '');
         const [description, setDescription] = useState(product?.description || '');
         const [price, setPrice] = useState(product?.price?.toString() || '');
-        const [stock, setStock] = useState(product?.stock?.toString() || '');
         const [imageFile, setImageFile] = useState<File | null>(null);
         const [previewImage, setPreviewImage] = useState<string | null>(product?.imageUrl || null);
 
@@ -226,14 +218,12 @@ const AdminDashboard = () => {
                 setName(product.name || '');
                 setDescription(product.description || '');
                 setPrice(product.price?.toString() || '');
-                setStock(product.stock?.toString() || '');
                 setPreviewImage(product.imageUrl || null);
                 setImageFile(null);
             } else {
                 setName('');
                 setDescription('');
                 setPrice('');
-                setStock('');
                 setImageFile(null);
                 setPreviewImage(null);
             }
@@ -266,7 +256,6 @@ const AdminDashboard = () => {
                 name,
                 description,
                 price: parseFloat(price),
-                stock: parseInt(stock),
                 imageUrl: uploadedImageUrl
             };
             onSubmit(productData); // Envia o objeto Product completo
@@ -312,17 +301,7 @@ const AdminDashboard = () => {
                                 required
                             />
                         </div>
-                        <div>
-                            <label htmlFor="stock" className="block text-gray-700 text-sm font-bold mb-2">Estoque:</label>
-                            <input
-                                type="number"
-                                id="stock"
-                                value={stock}
-                                onChange={(e) => setStock(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
+                    
                         <div>
                             <label htmlFor="image" className="block text-gray-700 text-sm font-bold mb-2">Imagem do Produto:</label>
                             <input

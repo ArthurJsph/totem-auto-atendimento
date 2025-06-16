@@ -33,20 +33,20 @@ public class Order {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
     // An order belongs to a user
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     // An order belongs to a restaurant
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Restaurant restaurant;
 
     // An order can have many items
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> items = new ArrayList<>();
 
     // An order has one payment
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id", referencedColumnName = "id")
     private Payment payment;
 
