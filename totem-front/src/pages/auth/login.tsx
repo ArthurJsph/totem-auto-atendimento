@@ -89,7 +89,7 @@ function Login() {
         {/* Adiciona um overlay sutil para melhorar o contraste com o formulário */}
         <div className="w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
             {/* Opcional: Adicionar um texto ou logo sobre a imagem */}
-            <h1 className="text-white text-4xl font-bold drop-shadow-lg">2 Tempos Café</h1>
+            <h1 className="text-white text-4xl font-bold drop-shadow-lg"></h1>
         </div>
       </div>
       <div className="w-full md:w-1/3 h-screen flex flex-col bg-white justify-center items-center p-8 overflow-y-auto"> {/* Adicionado overflow-y-auto para evitar cortar em telas pequenas */}

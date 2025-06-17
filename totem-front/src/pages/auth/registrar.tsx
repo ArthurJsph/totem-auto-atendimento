@@ -158,7 +158,7 @@ const Registrar = () => {
             <button
               type="submit"
               disabled={loading}
-              className="sm:col-span-2 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              className="sm:col-span-2 w-60 justify-self-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
             >
               {loading ? "Registrando..." : "Registrar"}
             </button>

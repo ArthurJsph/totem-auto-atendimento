@@ -23,18 +23,20 @@ export default function Footer() {
         <div className="flex flex-col items-center md:items-start text-center md:text-left w-full md:w-1/3">
           <h3 className="text-lg font-semibold mb-2">Contato</h3>
           <p className="text-sm text-gray-400">
-            Rua Fictícia, 123 - Centro<br />
-            Cidade Imaginária, BR - CEP: 12345-678
+            SIA Trecho 5 ED IMPORTE CENTER LT 05 35 LJ 05
+             - Guará, Brasília - DF, 71205-050
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Telefone: (XX) XXXX-XXXX
+            Telefone: (61) 98341-4120
           </p>
           <p className="text-sm text-gray-400">
             E-mail: <a href="mailto:contato@2temposcafe.com" className="hover:text-blue-400 transition-colors duration-200">contato@2temposcafe.com</a>
           </p>
           <p className="text-sm text-gray-400 mt-2">
             Horário de Atendimento: <br/>
-            Seg - Sex: 08:00 - 18:00
+            Seg - Sex: 07:00 - 17:00
+            <br/>
+            Sáb: 07:00 - 15:00
           </p>
         </div>
 
@@ -58,17 +60,17 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="/blog" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
-                Blog
+              <a href="/sobre-nos" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+                Sobre Nós
               </a>
             </li>
           </ul>
           {/* Seção de Redes Sociais - ícones (exemplo) */}
           <div className="flex mt-4 space-x-4">
-            <a href="https://www.instagram.com/2temposcafe" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 transition-colors duration-200">
+            <a href="https://www.instagram.com/2tempocafe/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 transition-colors duration-200">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-instagram"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
             </a>
-            <a href="https://www.facebook.com/2temposcafe" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors duration-200">
+            <a href="https://www.facebook.com/2temposcafe?locale=pt_BR" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors duration-200">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
             </a>
           </div>
