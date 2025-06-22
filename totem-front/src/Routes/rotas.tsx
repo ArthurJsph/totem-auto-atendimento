@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route,  Navigate } from 'react-router-dom';
 import Home from '../pages/public/home';
 import Produto from '../pages/public/produto';
 import Pedido from '../pages/public/pedido';
@@ -21,11 +21,15 @@ import PoliticaPrivacidade from '../pages/public/politicaPrivacidade';
 import TermosDeUso from '../pages/public/termosDeUso';
 import Blog from '../pages/public/blog';
 
+
 const Rotas = () => {
   return (
     <Router>
       <CartProvider>
         <Routes>
+
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
           <Route element={<Layout />}>
             <Route index element={<Home />} /> 
             <Route path="/produto" element={<Produto />} />

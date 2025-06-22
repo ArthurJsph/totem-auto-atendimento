@@ -1,9 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useLogin } from "../../hooks/useLogin";
+import { useLogin } from "../../hooks";
 
-// Ícones simples de SVG para substituir Font Awesome (caso não esteja usando)
-// Você pode substituir por um ícone de biblioteca como react-icons se preferir.
 const UserIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
