@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks';
-import { Product, Order, User } from '../../service/interfaces'; 
+import { Product, Order, User } from '../../service/interfaces'; // Verifique se Product tem ingredients, amount, restaurantId, menuCategoryId
+
 import {
     getAllProducts,
     saveProduct,
@@ -12,10 +13,11 @@ import {
     getAllOrders,
     updateOrder,
     deleteOrder
-} from '../../service/order'; 
+} from '../../service/order';
 
 import {
     getAllUsers,
+    updateUser,
     deleteUser
 } from '../../service/user';
 
@@ -32,6 +34,8 @@ const AdminDashboard = () => {
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
     const [users, setUsers] = useState<User[]>([]);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
     const [productLoading, setProductLoading] = useState(false);
     const [productError, setProductError] = useState<string | null>(null);
@@ -67,21 +71,26 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleAddEditProduct = async (productData: Product) => {
+    const handleAddEditProduct = async (productData: Product) => { // productData agora é Product, não Omit<Product, 'id'>
         setProductLoading(true);
         setProductError(null);
         try {
             if (productData.id) {
+                // Para atualização, assumimos que o ID já está no productData
                 await updateProduct(productData);
             } else {
-                // Ao salvar, certifique-se de que productData não tem um ID
-                const productToSave: Omit<Product, 'id'> = {
+                // Para salvar, precisamos garantir todos os campos obrigatórios do ProductInputDTO
+                const productToSave = { // Este é o objeto que corresponde ao ProductInputDTO
                     name: productData.name,
                     description: productData.description,
                     price: productData.price,
-                    imageUrl: productData.imageUrl
+                    imageUrl: productData.imageUrl,
+                    ingredients: productData.ingredients || [], // Garanta um array, mesmo que vazio
+                    amount: productData.amount || 0, // Garanta um valor padrão
+                    restaurantId: 1, // <--- Valor fixo 1
+                    menuCategoryId: productData.menuCategoryId // <--- Categoria deve vir do formulário
                 };
-                await saveProduct(productToSave); // Use o tipo Omit se seu saveProduct não aceita ID
+                await saveProduct(productToSave);
             }
             setIsProductModalOpen(false);
             setSelectedProduct(null);
@@ -110,7 +119,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // --- Funções de Fetch e CRUD para Pedidos ---
+    // --- Funções de Fetch e CRUD para Pedidos (mantidas) ---
     const fetchOrders = async () => {
         setOrderLoading(true);
         setOrderError(null);
@@ -134,7 +143,6 @@ const AdminDashboard = () => {
                 throw new Error("Pedido não encontrado para atualização de status.");
             }
 
-            // Garante que o objeto enviado tenha todos os campos obrigatórios da Order
             const updatedOrderData: Order = { ...currentOrder, status: newStatus };
             await updateOrder(updatedOrderData);
 
@@ -165,7 +173,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // --- Funções de Fetch e CRUD para Usuários ---
+    // --- Funções de Fetch e CRUD para Usuários (mantidas) ---
     const fetchUsers = async () => {
         setUserLoading(true);
         setUserError(null);
@@ -175,6 +183,22 @@ const AdminDashboard = () => {
         } catch (err: unknown) {
             console.error("Falha ao buscar usuários:", err);
             setUserError(`Não foi possível carregar os usuários: ${getErrorMessage(err)}`);
+        } finally {
+            setUserLoading(false);
+        }
+    };
+
+    const handleEditUser = async (userData: User) => {
+        setUserLoading(true);
+        setUserError(null);
+        try {
+            await updateUser(userData);
+            setIsUserModalOpen(false);
+            setSelectedUser(null);
+            fetchUsers();
+        } catch (err: unknown) {
+            console.error("Erro ao atualizar usuário:", err);
+            setUserError(`Erro ao atualizar usuário: ${getErrorMessage(err)}`);
         } finally {
             setUserLoading(false);
         }
@@ -212,6 +236,9 @@ const AdminDashboard = () => {
         const [price, setPrice] = useState(product?.price?.toString() || '');
         const [imageFile, setImageFile] = useState<File | null>(null);
         const [previewImage, setPreviewImage] = useState<string | null>(product?.imageUrl || null);
+        const [ingredients, setIngredients] = useState<string[]>(product?.ingredients || []); // Novo estado
+        const [amount, setAmount] = useState(product?.amount?.toString() || '0'); // Novo estado
+        const [menuCategoryId, setMenuCategoryId] = useState(product?.menuCategoryId?.toString() || '1'); // Novo estado
 
         useEffect(() => {
             if (product) {
@@ -219,13 +246,19 @@ const AdminDashboard = () => {
                 setDescription(product.description || '');
                 setPrice(product.price?.toString() || '');
                 setPreviewImage(product.imageUrl || null);
-                setImageFile(null);
+                setImageFile(null); // Limpa o arquivo selecionado ao editar
+                setIngredients(product.ingredients || []);
+                setAmount(product.amount?.toString() || '0');
+                setMenuCategoryId(product.menuCategoryId?.toString() || '1');
             } else {
                 setName('');
                 setDescription('');
                 setPrice('');
                 setImageFile(null);
                 setPreviewImage(null);
+                setIngredients([]);
+                setAmount('0');
+                setMenuCategoryId('1'); // Default para nova criação
             }
         }, [product]);
 
@@ -233,7 +266,7 @@ const AdminDashboard = () => {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 setImageFile(file);
-                setPreviewImage(URL.createObjectURL(file));
+                setPreviewImage(URL.createObjectURL(file)); // Para pré-visualização no frontend
             } else {
                 setImageFile(null);
                 setPreviewImage(null);
@@ -242,26 +275,49 @@ const AdminDashboard = () => {
 
         const handleSubmit = async (e: React.FormEvent) => {
             e.preventDefault();
-            let uploadedImageUrl: string | undefined = previewImage || undefined;
 
+            // Para simular o salvamento da imagem e obter o nome do arquivo
+            let finalImageUrl: string | undefined = previewImage || undefined;
             if (imageFile) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                uploadedImageUrl = `https://via.placeholder.com/150/FFA500/FFFFFF?text=${name.replace(/\s/g, '+')}_${Date.now()}`;
-                console.log("IMAGEM UPLOADADA (simulado):", uploadedImageUrl);
+                // Simulação de upload: cria um nome de arquivo baseado no nome do produto e timestamp
+                // Em um ambiente real, você faria um upload para um serviço de storage e obteria o URL.
+                const fileName = `${name.replace(/\s/g, '_').toLowerCase()}_${Date.now()}.${imageFile.name.split('.').pop()}`;
+                // O caminho no assets seria algo como `/assets/images/${fileName}` ou apenas `fileName`
+                // dependendo de como seu backend resolve o imageUrl. Para este exemplo, usamos o filename puro.
+                finalImageUrl = fileName;
+
+                // Aqui você faria a lógica para MOVER/SALVAR a `imageFile` para a pasta `assets` do servidor.
+                // Isso NÃO PODE ser feito diretamente do frontend por segurança do navegador.
+                // Você precisaria enviar `imageFile` para um endpoint no backend que faria o armazenamento no sistema de arquivos.
+                console.log(`SIMULANDO SALVAMENTO DE IMAGEM: O arquivo "${imageFile.name}" seria salvo como "${fileName}" no seu diretório de assets do servidor.`);
+                // Por agora, o `finalImageUrl` será o nome que você vai salvar no DB.
             }
 
-            // Adapta o objeto para o formato Product
+
+            // Adapta o objeto para o formato Product (para o frontend)
+            // Lembre-se que ProductInputDTO tem campos como `amount`, `restaurantId`, `menuCategoryId` e `ingredients`
             const productData: Product = {
-                id: product ? product.id : undefined,
+                id: product ? product.id : undefined, // Apenas se for uma edição
                 name,
                 description,
                 price: parseFloat(price),
-                imageUrl: uploadedImageUrl
+                imageUrl: finalImageUrl, // Usa o nome/URL simulado da imagem
+                ingredients: ingredients,
+                amount: parseInt(amount),
+                restaurantId: 1, // Forçado para 1 conforme solicitado
+                menuCategoryId: parseInt(menuCategoryId)
             };
             onSubmit(productData); // Envia o objeto Product completo
         };
 
         if (!isOpen) return null;
+
+        const menuCategories = [
+            { id: 1, name: 'Bebidas' },
+            { id: 2, name: 'Sobremesas' },
+            { id: 3, name: 'Lanches' },
+            { id: 4, name: 'Almoço' },
+        ];
 
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -301,7 +357,41 @@ const AdminDashboard = () => {
                                 required
                             />
                         </div>
-                    
+                        <div>
+                            <label htmlFor="ingredients" className="block text-gray-700 text-sm font-bold mb-2">Ingredientes (separados por vírgula):</label>
+                            <input
+                                type="text"
+                                id="ingredients"
+                                value={ingredients.join(', ')}
+                                onChange={(e) => setIngredients(e.target.value.split(',').map(s => s.trim()))}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="amount" className="block text-gray-700 text-sm font-bold mb-2">Quantidade em Estoque:</label>
+                            <input
+                                type="number"
+                                id="amount"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="menuCategoryId" className="block text-gray-700 text-sm font-bold mb-2">Categoria do Menu:</label>
+                            <select
+                                id="menuCategoryId"
+                                value={menuCategoryId}
+                                onChange={(e) => setMenuCategoryId(e.target.value)}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                                required
+                            >
+                                {menuCategories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div>
                             <label htmlFor="image" className="block text-gray-700 text-sm font-bold mb-2">Imagem do Produto:</label>
                             <input
@@ -341,6 +431,7 @@ const AdminDashboard = () => {
         );
     };
 
+    // ... (restante do código: OrderModal, UserModal, etc.)
     const OrderModal = ({ isOpen, onClose, onSubmit, order }) => {
         const [status, setStatus] = useState(order?.status || '');
 
@@ -366,16 +457,12 @@ const AdminDashboard = () => {
                 return 'N/A';
             }
             try {
-                // Tenta criar um objeto Date. Se for string, New Date() vai parsear.
-                // Se já for Date, será usado diretamente.
                 const date = new Date(dateInput);
-                // getTime() retorna NaN se a data for inválida
                 if (isNaN(date.getTime())) {
                     return 'Data Inválida';
                 }
                 return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
             } catch (e) {
-                // Captura qualquer outro erro de parsing
                 console.error("Erro ao formatar data:", e);
                 return 'Erro na Data';
             }
@@ -387,10 +474,9 @@ const AdminDashboard = () => {
                 <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
                     <h3 className="text-2xl font-bold text-gray-800 mb-6">Atualizar Status do Pedido #{order.id}</h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Exibindo User ID para Cliente */}
                         <p className="text-gray-700">Cliente (ID): <span className="font-semibold">{order.userId || 'N/A'}</span></p>
-                        <p className="text-gray-700">Total: <span className="font-semibold">R$ {order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</span></p>
-                        <p className="text-gray-700">Data do Pedido: <span className="font-semibold">{formatOrderDate(order.createdAt)}</span></p> {/* Usar createdAt para a data do pedido */}
+                        <p className="text-gray-700">Total: <span className="font-semibold">R$ {order.total ? order.total.toFixed(2) : '0.00'}</span></p>
+                        <p className="text-gray-700">Data do Pedido: <span className="font-semibold">{formatOrderDate(order.createdAt)}</span></p>
                         <p className="text-gray-700 mb-4">Itens: <span className="font-semibold">{order.items ? order.items.map(item => `${item.qty}x ${item.name}`).join(', ') : 'N/A'}</span></p>
 
                         <div>
@@ -437,6 +523,105 @@ const AdminDashboard = () => {
         return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     }
 
+    type UserRole = 'CLIENT' | 'MANAGER' | 'ADMIN';
+
+    const UserModal = ({ isOpen, onClose, onSubmit, user }) => {
+        const [name, setName] = useState(user?.name || '');
+        const [email, setEmail] = useState(user?.email || '');
+        const [role, setRole] = useState<UserRole>(user?.role || 'CLIENT');
+
+        useEffect(() => {
+            if (user) {
+                setName(user.name || '');
+                setEmail(user.email || '');
+                setRole(user.role || 'CLIENT');
+            } else {
+                setName('');
+                setEmail('');
+                setRole('CLIENT');
+            }
+        }, [user]);
+
+        const handleSubmit = (e: React.FormEvent) => {
+            e.preventDefault();
+            const userData: User = {
+                ...user,
+                name,
+                email,
+                role
+            };
+            onSubmit(userData);
+        };
+
+        if (!isOpen || !user) return null;
+
+        const roleOptions: UserRole[] = ['CLIENT', 'MANAGER', 'ADMIN'];
+
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6">Editar Usuário #{user.id}</h3>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label htmlFor="userName" className="block text-gray-700 text-sm font-bold mb-2">Nome:</label>
+                            <input
+                                type="text"
+                                id="userName"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="userEmail" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                            <input
+                                type="email"
+                                id="userEmail"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="userRole" className="block text-gray-700 text-sm font-bold mb-2">Função (Role):</label>
+                            <select
+                                id="userRole"
+                                value={role}
+                                onChange={(e) => setRole(e.target.value as UserRole)}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
+                                required
+                            >
+                                {roleOptions.map(option => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-4 mt-6">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+                                disabled={userLoading}
+                            >
+                                {userLoading ? 'Salvando...' : 'Salvar Alterações'}
+                            </button>
+                        </div>
+                    </form>
+                    {userError && <p className="text-red-600 mt-4 text-center">{userError}</p>}
+                </div>
+            </div>
+        );
+    };
+
+
     // --- Renderização Principal do AdminDashboard ---
     return (
         <div className="min-h-screen bg-white p-6 md:p-10 text-gray-800 rounded-lg shadow-lg font-sans">
@@ -448,7 +633,7 @@ const AdminDashboard = () => {
                 Gerencie produtos, pedidos e usuários do sistema.
             </p>
 
-            {/* --- Seção de Gerenciamento de Produtos --- */}
+            {/* --- Seção de Gerenciamento de Produtos --- (mantida como está) */}
             <div className="bg-gray-100 rounded-lg shadow-md p-6 mb-10 border border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                     <h3 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Produtos</h3>
@@ -509,7 +694,7 @@ const AdminDashboard = () => {
                 )}
             </div>
 
-            {/* --- Seção de Gerenciamento de Pedidos --- */}
+            {/* --- Seção de Gerenciamento de Pedidos --- (mantida como está) */}
             <div className="bg-gray-100 rounded-lg shadow-md p-6 mb-10 border border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                     <h3 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Pedidos</h3>
@@ -536,10 +721,10 @@ const AdminDashboard = () => {
                                     {orders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50 transition-colors duration-200">
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.id}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.userId || 'N/A'}</td> {/* Exibe userId */}
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">R$ {order.total ? order.total.toFixed(2) : '0.00'}</td> {/* Usar total, não totalAmount */}
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.userId || 'N/A'}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">R$ {order.total ? order.total.toFixed(2) : '0.00'}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">
-                                                {formatOrderDate(order.createdAt)} {/* Usar createdAt para data do pedido */}
+                                                {formatOrderDate(order.createdAt)}
                                             </td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -597,7 +782,11 @@ const AdminDashboard = () => {
                             <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                                 <thead className="bg-gray-100">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Nome</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Email</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Role</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Nome</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Email</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Role</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -608,14 +797,22 @@ const AdminDashboard = () => {
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{user.email}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    user.role === 'ADMIN' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
+                                                    user.role === 'ADMIN' ? 'bg-orange-100 text-orange-800' :
+                                                    user.role === 'MANAGER' ? 'bg-purple-100 text-purple-800' :
+                                                    'bg-gray-100 text-gray-800'
                                                 }`}>
                                                     {user.role}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
-                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    onClick={() => { setSelectedUser(user); setIsUserModalOpen(true); }}
+                                                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-xs mr-2 transition"
+                                                >
+                                                    <i className="fas fa-edit mr-1"></i> Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id as number)}
                                                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
                                                 >
                                                     <i className="fas fa-trash-alt mr-1"></i> Deletar
@@ -646,6 +843,14 @@ const AdminDashboard = () => {
                 onClose={() => setIsOrderModalOpen(false)}
                 onSubmit={handleUpdateOrderStatus}
                 order={selectedOrder}
+            />
+
+            {/* <--- NOVO Modal de Usuário */}
+            <UserModal
+                isOpen={isUserModalOpen}
+                onClose={() => setIsUserModalOpen(false)}
+                onSubmit={handleEditUser}
+                user={selectedUser}
             />
         </div>
     );

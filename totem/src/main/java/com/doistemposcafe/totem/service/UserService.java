@@ -41,18 +41,38 @@ public class UserService {
 
     public UserOutputDTO updateUser(UserInputDTO inputDTO, Long id) {
         return userRepository.findById(id)
-                .map(existing -> {
-                    existing.setName(inputDTO.name());
-                    existing.setEmail(inputDTO.email());
-                    existing.setPassword(inputDTO.password());
-                    existing.setPhone(inputDTO.phone());
-                    existing.setCpf(inputDTO.cpf());
-                    existing.setRole(Role.valueOf(inputDTO.role()));
-                    return userRepository.save(existing);
+                .map(existingUser -> {
+
+                    if (inputDTO.name() != null && !inputDTO.name().trim().isEmpty()) {
+                        existingUser.setName(inputDTO.name());
+                    }
+
+                    if (inputDTO.email() != null && !inputDTO.email().trim().isEmpty()) {
+                        existingUser.setEmail(inputDTO.email());
+                    }
+
+                    if (inputDTO.password() != null && !inputDTO.password().trim().isEmpty()) {
+                        existingUser.setPassword(passwordEncoder.encode(inputDTO.password()));
+                    }
+
+                    if (inputDTO.phone() != null && !inputDTO.phone().trim().isEmpty()) {
+                        existingUser.setPhone(inputDTO.phone());
+                    }
+
+                    if (inputDTO.cpf() != null && !inputDTO.cpf().trim().isEmpty()) {
+                        existingUser.setCpf(inputDTO.cpf());
+                    }
+
+                    if (inputDTO.role() != null && !inputDTO.role().trim().isEmpty()) {
+                        existingUser.setRole(Role.valueOf(inputDTO.role()));
+                    }
+
+                    return userMapper.toOutputDTO(userRepository.save(existingUser));
                 })
-                .map(userMapper::toOutputDTO)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuário com ID " + id + " não encontrado."));
     }
+
+
 
     public boolean deleteUser(Long id) {
         if (userRepository.existsById(id)) {

@@ -28,7 +28,7 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between relative z-50">
       {/* Logo à esquerda - remova flex-1 */}
-      <div className="flex items-center"> {/* Removido flex-1 */}
+      <div className="flex items-center">
         <img
           src="src/assets/logo.png"
           alt="2 Tempos Café Logo"
@@ -37,9 +37,10 @@ export default function Navbar() {
       </div>
 
       {/* Links centralizados para telas maiores (desktop) - Adicione flex-1 e justify-center */}
-      <div className="hidden md:flex flex-1 justify-center"> {/* Adicionado flex-1 e mantido justify-center */}
+      <div className="hidden md:flex flex-1 justify-center">
         <div className="space-x-6 text-gray-700 font-medium">
-          <Link to="/" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
+          {/* MUDANÇA AQUI: Altere to="/" para to="/home" */}
+          <Link to="/home" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
             Home
           </Link>
           <Link to="/pedido" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
@@ -57,7 +58,7 @@ export default function Navbar() {
       </div>
 
       {/* Botões de Login/Sair para telas maiores (desktop) - remova flex-1, adicione ml-auto */}
-      <div className="hidden md:flex justify-end items-center space-x-4 ml-auto"> {/* Removido flex-1, adicionado ml-auto */}
+      <div className="hidden md:flex justify-end items-center space-x-4 ml-auto">
         {!loggedIn ? (
           <>
             <Link to="/login" className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition">
@@ -73,8 +74,6 @@ export default function Navbar() {
           </button>
         )}
       </div>
-
-      {/* ... (Restante do código para mobile - hambúrguer, menu lateral, etc. - permanece o mesmo) ... */}
 
       {/* Ícone de Hambúrguer (visível apenas em telas menores) */}
       <div className="md:hidden flex items-center">
@@ -107,7 +106,8 @@ export default function Navbar() {
           rounded-bl-lg
         `}
       >
-        <Link to="/" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
+        {/* MUDANÇA AQUI: Altere to="/" para to="/home" no menu mobile também */}
+        <Link to="/home" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
           Home
         </Link>
         <Link to="/pedido" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
