@@ -1,27 +1,336 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks';
-import { Product, Order, User } from '../../service/interfaces'; // Verifique se Product tem ingredients, amount, restaurantId, menuCategoryId
-
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '../../hooks/useAuth'; // Ajuste o caminho se necessário
+import { Product, Order, User } from '../../service/interfaces'; // Verifique todas as interfaces
 import {
     getAllProducts,
     saveProduct,
     updateProduct,
     deleteProduct
 } from '../../service/product';
-
 import {
     getAllOrders,
     updateOrder,
     deleteOrder
 } from '../../service/order';
-
 import {
     getAllUsers,
     updateUser,
     deleteUser
 } from '../../service/user';
 
-// --- Componente AdminDashboard ---
+// --- Funções Auxiliares (movidas para fora do componente principal) ---
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    if (typeof error === 'object' && error !== null && 'response' in error && (error as any).response?.data?.message) {
+        return (error as any).response.data.message; // Captura mensagem de erro do Axios
+    }
+    if (typeof error === 'string') {
+        return error;
+    }
+    return 'Ocorreu um erro desconhecido.';
+};
+
+const formatOrderDate = (dateInput: string | Date | undefined): string => {
+    if (!dateInput) return 'N/A';
+    try {
+        const date = new Date(dateInput);
+        if (isNaN(date.getTime())) return 'Data Inválida';
+        return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch (e) {
+        console.error("Erro ao formatar data:", e);
+        return 'Erro na Data';
+    }
+};
+
+// --- Interfaces para Props dos Modais (melhor definir fora) ---
+interface ProductModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (product: Product) => Promise<void>; // Retorna Promise<void> para async
+    product: Product | null;
+    isLoading: boolean;
+    error: string | null;
+}
+
+interface OrderModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (orderId: string | number, newStatus: Order['status']) => Promise<void>; // Retorna Promise<void>
+    order: Order | null;
+    isLoading: boolean;
+    error: string | null;
+}
+
+interface UserModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (user: User) => Promise<void>; // Retorna Promise<void>
+    user: User | null;
+    isLoading: boolean;
+    error: string | null;
+}
+
+// --- Componentes Modais (Separados para melhor organização) ---
+
+// ProductModal
+const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSubmit, product, isLoading, error }) => {
+    const [name, setName] = useState(product?.name || '');
+    const [description, setDescription] = useState(product?.description || '');
+    const [price, setPrice] = useState(product?.price?.toString() || '');
+    const [imageUrl, setImageUrl] = useState(product?.imageUrl || '');
+    const [ingredients, setIngredients] = useState<string[]>(product?.ingredients || []);
+    const [amount, setAmount] = useState(product?.amount?.toString() || '0');
+    const [menuCategoryId, setMenuCategoryId] = useState(product?.menuCategoryId?.toString() || '1');
+
+    useEffect(() => {
+        if (product) {
+            setName(product.name || '');
+            setDescription(product.description || '');
+            setPrice(product.price?.toString() || '');
+            setImageUrl(product.imageUrl || '');
+            setIngredients(product.ingredients || []);
+            setAmount(product.amount?.toString() || '0');
+            setMenuCategoryId(product.menuCategoryId?.toString() || '1');
+        } else {
+            setName('');
+            setDescription('');
+            setPrice('');
+            setImageUrl('');
+            setIngredients([]);
+            setAmount('0');
+            setMenuCategoryId('1');
+        }
+    }, [product, isOpen]); // Adicionado isOpen para resetar ao abrir para um novo produto
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Validação básica
+        if (!name.trim()) { alert('O nome do produto é obrigatório.'); return; }
+        if (parseFloat(price) <= 0 || isNaN(parseFloat(price))) { alert('O preço deve ser um número positivo.'); return; }
+        if (parseInt(amount) < 0 || isNaN(parseInt(amount))) { alert('A quantidade em estoque deve ser um número não negativo.'); return; }
+        if (parseInt(menuCategoryId) <= 0 || isNaN(parseInt(menuCategoryId))) { alert('Selecione uma categoria válida.'); return; }
+
+        const productData: Product = {
+            id: product?.id,
+            name: name.trim(),
+            description: description.trim(),
+            price: parseFloat(price),
+            imageUrl: imageUrl.trim() || undefined,
+            ingredients: ingredients,
+            amount: parseInt(amount),
+            restaurantId: 1, // Assumindo valor fixo 1
+            menuCategoryId: parseInt(menuCategoryId)
+        };
+        await onSubmit(productData);
+    };
+
+    if (!isOpen) return null;
+
+    const menuCategories = [
+        { id: 1, name: 'Bebidas' },
+        { id: 2, name: 'Sobremesas' },
+        { id: 3, name: 'Lanches' },
+        { id: 4, name: 'Almoço' },
+    ];
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">{product ? 'Editar Produto' : 'Adicionar Novo Produto'}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Nome do Produto:</label>
+                        <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required />
+                    </div>
+                    <div>
+                        <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Descrição:</label>
+                        <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300 h-24" required></textarea>
+                    </div>
+                    <div>
+                        <label htmlFor="price" className="block text-gray-700 text-sm font-bold mb-2">Preço:</label>
+                        <input type="number" id="price" value={price} onChange={(e) => setPrice(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" step="0.01" required />
+                    </div>
+                    <div>
+                        <label htmlFor="ingredients" className="block text-gray-700 text-sm font-bold mb-2">Ingredientes (separados por vírgula):</label>
+                        <input type="text" id="ingredients" value={ingredients.join(', ')} onChange={(e) => setIngredients(e.target.value.split(',').map(s => s.trim()))}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" />
+                    </div>
+                    <div>
+                        <label htmlFor="amount" className="block text-gray-700 text-sm font-bold mb-2">Quantidade em Estoque:</label>
+                        <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required />
+                    </div>
+                    <div>
+                        <label htmlFor="menuCategoryId" className="block text-gray-700 text-sm font-bold mb-2">Categoria do Menu:</label>
+                        <select id="menuCategoryId" value={menuCategoryId} onChange={(e) => setMenuCategoryId(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required>
+                            {menuCategories.map(cat => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="imageUrl" className="block text-gray-700 text-sm font-bold mb-2">URL da Imagem:</label>
+                        <input type="url" id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
+                            placeholder="https://example.com/image.jpg"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" />
+                    </div>
+                    <div className="flex justify-end gap-4 mt-6">
+                        <button type="button" onClick={onClose}
+                            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition" disabled={isLoading}>
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition" disabled={isLoading}>
+                            {isLoading ? 'Salvando...' : (product ? 'Salvar Alterações' : 'Adicionar Produto')}
+                        </button>
+                    </div>
+                </form>
+                {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
+            </div>
+        </div>
+    );
+};
+
+// OrderModal
+const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, onSubmit, order, isLoading, error }) => {
+    const [status, setStatus] = useState(order?.status || '');
+
+    useEffect(() => {
+        if (order) {
+            setStatus(order.status || '');
+        } else {
+            setStatus('');
+        }
+    }, [order, isOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (order?.id) { // Certifica-se de que há um ID de pedido
+            await onSubmit(order.id, status);
+        } else {
+            alert("Erro: ID do pedido não encontrado para atualização.");
+        }
+    };
+
+    if (!isOpen || !order) return null;
+
+    const statusOptions: Order['status'][] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">Atualizar Status do Pedido #{order.id}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <p className="text-gray-700">Cliente (ID): <span className="font-semibold">{order.userId || 'N/A'}</span></p>
+                    <p className="text-gray-700">Total: <span className="font-semibold">R$ {order.total ? order.total.toFixed(2) : '0.00'}</span></p>
+                    <p className="text-gray-700">Data do Pedido: <span className="font-semibold">{formatOrderDate(order.createdAt)}</span></p>
+                    <p className="text-gray-700 mb-4">Itens: <span className="font-semibold">{order.items ? order.items.map(item => `${item.qty}x ${item.name}`).join(', ') : 'N/A'}</span></p>
+
+                    <div>
+                        <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Novo Status:</label>
+                        <select id="status" value={status} onChange={(e) => setStatus(e.target.value as Order['status'])}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required>
+                            {statusOptions.map(option => (<option key={option} value={option}>{option}</option>))}
+                        </select>
+                    </div>
+                    <div className="flex justify-end gap-4 mt-6">
+                        <button type="button" onClick={onClose}
+                            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition" disabled={isLoading}>
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition" disabled={isLoading}>
+                            {isLoading ? 'Salvando...' : 'Atualizar Status'}
+                        </button>
+                    </div>
+                </form>
+                {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
+            </div>
+        </div>
+    );
+};
+
+// UserModal
+const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, isLoading, error }) => {
+    const [name, setName] = useState(user?.name || '');
+    const [email, setEmail] = useState(user?.email || '');
+    const [role, setRole] = useState<User['role']>(user?.role || 'CLIENT');
+
+    useEffect(() => {
+        if (user) {
+            setName(user.name || '');
+            setEmail(user.email || '');
+            setRole(user.role || 'CLIENT');
+        } else {
+            setName('');
+            setEmail('');
+            setRole('CLIENT');
+        }
+    }, [user, isOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim() || !email.trim()) { alert('Nome e Email são obrigatórios.'); return; }
+        if (!user?.id) { alert('Erro: ID do usuário não encontrado para atualização.'); return; }
+
+        const userData: User = {
+            ...user, // Mantém outras propriedades do usuário
+            name: name.trim(),
+            email: email.trim(),
+            role
+        };
+        await onSubmit(userData);
+    };
+
+    if (!isOpen || !user) return null;
+
+    const roleOptions: User['role'][] = ['CLIENT', 'MANAGER', 'ADMIN'];
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">Editar Usuário #{user.id}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="userName" className="block text-gray-700 text-sm font-bold mb-2">Nome:</label>
+                        <input type="text" id="userName" value={name} onChange={(e) => setName(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required />
+                    </div>
+                    <div>
+                        <label htmlFor="userEmail" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                        <input type="email" id="userEmail" value={email} onChange={(e) => setEmail(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required />
+                    </div>
+                    <div>
+                        <label htmlFor="userRole" className="block text-gray-700 text-sm font-bold mb-2">Função (Role):</label>
+                        <select id="userRole" value={role} onChange={(e) => setRole(e.target.value as User['role'])}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300" required>
+                            {roleOptions.map(option => (<option key={option} value={option}>{option}</option>))}
+                        </select>
+                    </div>
+                    <div className="flex justify-end gap-4 mt-6">
+                        <button type="button" onClick={onClose}
+                            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition" disabled={isLoading}>
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition" disabled={isLoading}>
+                            {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
+                    </div>
+                </form>
+                {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
+            </div>
+        </div>
+    );
+};
+
+// --- Componente AdminDashboard Principal ---
 const AdminDashboard = () => {
     const { authorities } = useAuth();
 
@@ -44,20 +353,30 @@ const AdminDashboard = () => {
     const [userLoading, setUserLoading] = useState(false);
     const [userError, setUserError] = useState<string | null>(null);
 
+    // --- Estados para os Filtros ---
+    // Produtos
+    const [filterProductName, setFilterProductName] = useState('');
+    const [filterProductMinPrice, setFilterProductMinPrice] = useState('');
+    const [filterProductMaxPrice, setFilterProductMaxPrice] = useState('');
+
+    // Pedidos
+    const [filterOrderId, setFilterOrderId] = useState('');
+    const [filterOrderStatus, setFilterOrderStatus] = useState('');
+    const [filterOrderMinTotal, setFilterOrderMinTotal] = useState('');
+    const [filterOrderMaxTotal, setFilterOrderMaxTotal] = useState('');
+
+    // Usuários
+    const [filterUserName, setFilterUserName] = useState('');
+    const [filterUserEmail, setFilterUserEmail] = useState('');
+    const [filterUserRole, setFilterUserRole] = useState('');
+
+
     const isAdmin = authorities.includes('ADMIN');
 
-    const getErrorMessage = (error: unknown): string => {
-        if (error instanceof Error) {
-            return error.message;
-        }
-        if (typeof error === 'string') {
-            return error;
-        }
-        return 'Ocorreu um erro desconhecido.';
-    };
+    // Funções de tratamento de erro e formatação de data são movidas para fora do componente
 
-    // --- Funções de Fetch e CRUD para Produtos ---
-    const fetchProducts = async () => {
+    // --- Funções de Fetch e CRUD (otimizadas com useCallback) ---
+    const fetchProducts = useCallback(async () => {
         setProductLoading(true);
         setProductError(null);
         try {
@@ -69,47 +388,37 @@ const AdminDashboard = () => {
         } finally {
             setProductLoading(false);
         }
-    };
+    }, []); // Dependências vazias, pois getErrorMessage é estável
 
-    const handleAddEditProduct = async (productData: Product) => { // productData agora é Product, não Omit<Product, 'id'>
+    const handleAddEditProduct = useCallback(async (productData: Product) => {
         setProductLoading(true);
-        setProductError(null);
+        setProductError(null); // Limpa erro anterior do modal
         try {
             if (productData.id) {
-                // Para atualização, assumimos que o ID já está no productData
                 await updateProduct(productData);
             } else {
-                // Para salvar, precisamos garantir todos os campos obrigatórios do ProductInputDTO
-                const productToSave = { // Este é o objeto que corresponde ao ProductInputDTO
-                    name: productData.name,
-                    description: productData.description,
-                    price: productData.price,
-                    imageUrl: productData.imageUrl,
-                    ingredients: productData.ingredients || [], // Garanta um array, mesmo que vazio
-                    amount: productData.amount || 0, // Garanta um valor padrão
-                    restaurantId: 1, // <--- Valor fixo 1
-                    menuCategoryId: productData.menuCategoryId // <--- Categoria deve vir do formulário
-                };
-                await saveProduct(productToSave);
+                const { id, ...productToSave } = productData; // Remove 'id' para nova criação
+                await saveProduct(productToSave as Omit<Product, 'id'>);
             }
             setIsProductModalOpen(false);
             setSelectedProduct(null);
-            fetchProducts();
+            await fetchProducts(); // Garante que a lista seja atualizada após a operação
         } catch (err: unknown) {
             console.error("Erro ao salvar produto:", err);
             setProductError(`Erro ao salvar produto: ${getErrorMessage(err)}`);
+            throw err; // Re-throw para o modal poder pegar o erro
         } finally {
             setProductLoading(false);
         }
-    };
+    }, [fetchProducts]);
 
-    const handleDeleteProduct = async (productId: string | number) => {
+    const handleDeleteProduct = useCallback(async (productId: string | number) => {
         if (window.confirm("Tem certeza que deseja excluir este produto?")) {
             setProductLoading(true);
             setProductError(null);
             try {
                 await deleteProduct(productId);
-                fetchProducts();
+                await fetchProducts();
             } catch (err: unknown) {
                 console.error("Erro ao excluir produto:", err);
                 setProductError(`Erro ao excluir produto: ${getErrorMessage(err)}`);
@@ -117,10 +426,9 @@ const AdminDashboard = () => {
                 setProductLoading(false);
             }
         }
-    };
+    }, [fetchProducts]);
 
-    // --- Funções de Fetch e CRUD para Pedidos (mantidas) ---
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         setOrderLoading(true);
         setOrderError(null);
         try {
@@ -132,38 +440,38 @@ const AdminDashboard = () => {
         } finally {
             setOrderLoading(false);
         }
-    };
+    }, []);
 
-    const handleUpdateOrderStatus = async (orderId: string | number, newStatus: Order['status']) => {
+    const handleUpdateOrderStatus = useCallback(async (orderId: string | number, newStatus: Order['status']) => {
         setOrderLoading(true);
-        setOrderError(null);
+        setOrderError(null); // Limpa erro anterior do modal
         try {
             const currentOrder = orders.find(order => order.id === orderId);
             if (!currentOrder) {
                 throw new Error("Pedido não encontrado para atualização de status.");
             }
-
             const updatedOrderData: Order = { ...currentOrder, status: newStatus };
             await updateOrder(updatedOrderData);
 
             setIsOrderModalOpen(false);
             setSelectedOrder(null);
-            fetchOrders();
+            await fetchOrders();
         } catch (err: unknown) {
             console.error("Erro ao atualizar status do pedido:", err);
             setOrderError(`Erro ao atualizar status do pedido: ${getErrorMessage(err)}`);
+            throw err; // Re-throw para o modal poder pegar o erro
         } finally {
             setOrderLoading(false);
         }
-    };
+    }, [orders, fetchOrders]); // orders é dependência, pois find() usa o estado atual
 
-    const handleDeleteOrder = async (orderId: string | number) => {
+    const handleDeleteOrder = useCallback(async (orderId: string | number) => {
         if (window.confirm("Tem certeza que deseja cancelar/excluir este pedido?")) {
             setOrderLoading(true);
             setOrderError(null);
             try {
                 await deleteOrder(orderId);
-                fetchOrders();
+                await fetchOrders();
             } catch (err: unknown) {
                 console.error("Erro ao excluir pedido:", err);
                 setOrderError(`Erro ao excluir pedido: ${getErrorMessage(err)}`);
@@ -171,10 +479,9 @@ const AdminDashboard = () => {
                 setOrderLoading(false);
             }
         }
-    };
+    }, [fetchOrders]);
 
-    // --- Funções de Fetch e CRUD para Usuários (mantidas) ---
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setUserLoading(true);
         setUserError(null);
         try {
@@ -186,31 +493,32 @@ const AdminDashboard = () => {
         } finally {
             setUserLoading(false);
         }
-    };
+    }, []);
 
-    const handleEditUser = async (userData: User) => {
+    const handleEditUser = useCallback(async (userData: User) => {
         setUserLoading(true);
-        setUserError(null);
+        setUserError(null); // Limpa erro anterior do modal
         try {
             await updateUser(userData);
             setIsUserModalOpen(false);
             setSelectedUser(null);
-            fetchUsers();
+            await fetchUsers();
         } catch (err: unknown) {
             console.error("Erro ao atualizar usuário:", err);
             setUserError(`Erro ao atualizar usuário: ${getErrorMessage(err)}`);
+            throw err; // Re-throw para o modal poder pegar o erro
         } finally {
             setUserLoading(false);
         }
-    };
+    }, [fetchUsers]);
 
-    const handleDeleteUser = async (userId: string | number) => {
+    const handleDeleteUser = useCallback(async (userId: string | number) => {
         if (window.confirm("Tem certeza que deseja excluir este usuário?")) {
             setUserLoading(true);
             setUserError(null);
             try {
                 await deleteUser(userId);
-                fetchUsers();
+                await fetchUsers();
             } catch (err: unknown) {
                 console.error("Erro ao excluir usuário:", err);
                 setUserError(`Erro ao excluir usuário: ${getErrorMessage(err)}`);
@@ -218,409 +526,62 @@ const AdminDashboard = () => {
                 setUserLoading(false);
             }
         }
-    };
+    }, [fetchUsers]);
 
+    // --- useEffects para carregar dados na montagem ou quando isAdmin muda ---
     useEffect(() => {
         if (isAdmin) {
             fetchProducts();
             fetchOrders();
             fetchUsers();
         }
-    }, [isAdmin]);
+    }, [isAdmin, fetchProducts, fetchOrders, fetchUsers]); // Todas as funções de fetch são dependências
 
+    // --- Lógica de Filtragem Otimizada com useMemo ---
 
-    // --- Componentes Modais Internos ---
-    const ProductModal = ({ isOpen, onClose, onSubmit, product }) => {
-        const [name, setName] = useState(product?.name || '');
-        const [description, setDescription] = useState(product?.description || '');
-        const [price, setPrice] = useState(product?.price?.toString() || '');
-        const [imageFile, setImageFile] = useState<File | null>(null);
-        const [previewImage, setPreviewImage] = useState<string | null>(product?.imageUrl || null);
-        const [ingredients, setIngredients] = useState<string[]>(product?.ingredients || []); // Novo estado
-        const [amount, setAmount] = useState(product?.amount?.toString() || '0'); // Novo estado
-        const [menuCategoryId, setMenuCategoryId] = useState(product?.menuCategoryId?.toString() || '1'); // Novo estado
+    // Produtos Filtrados
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            const matchesName = product.name?.toLowerCase().includes(filterProductName.toLowerCase()) ||
+                                product.description?.toLowerCase().includes(filterProductName.toLowerCase());
 
-        useEffect(() => {
-            if (product) {
-                setName(product.name || '');
-                setDescription(product.description || '');
-                setPrice(product.price?.toString() || '');
-                setPreviewImage(product.imageUrl || null);
-                setImageFile(null); // Limpa o arquivo selecionado ao editar
-                setIngredients(product.ingredients || []);
-                setAmount(product.amount?.toString() || '0');
-                setMenuCategoryId(product.menuCategoryId?.toString() || '1');
-            } else {
-                setName('');
-                setDescription('');
-                setPrice('');
-                setImageFile(null);
-                setPreviewImage(null);
-                setIngredients([]);
-                setAmount('0');
-                setMenuCategoryId('1'); // Default para nova criação
-            }
-        }, [product]);
+            const price = product.price ?? 0;
+            const minPrice = parseFloat(filterProductMinPrice);
+            const maxPrice = parseFloat(filterProductMaxPrice);
 
-        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                setImageFile(file);
-                setPreviewImage(URL.createObjectURL(file)); // Para pré-visualização no frontend
-            } else {
-                setImageFile(null);
-                setPreviewImage(null);
-            }
-        };
+            const matchesMinPrice = isNaN(minPrice) || price >= minPrice;
+            const matchesMaxPrice = isNaN(maxPrice) || price <= maxPrice;
 
-        const handleSubmit = async (e: React.FormEvent) => {
-            e.preventDefault();
+            return matchesName && matchesMinPrice && matchesMaxPrice;
+        });
+    }, [products, filterProductName, filterProductMinPrice, filterProductMaxPrice]);
 
-            // Para simular o salvamento da imagem e obter o nome do arquivo
-            let finalImageUrl: string | undefined = previewImage || undefined;
-            if (imageFile) {
-                // Simulação de upload: cria um nome de arquivo baseado no nome do produto e timestamp
-                // Em um ambiente real, você faria um upload para um serviço de storage e obteria o URL.
-                const fileName = `${name.replace(/\s/g, '_').toLowerCase()}_${Date.now()}.${imageFile.name.split('.').pop()}`;
-                // O caminho no assets seria algo como `/assets/images/${fileName}` ou apenas `fileName`
-                // dependendo de como seu backend resolve o imageUrl. Para este exemplo, usamos o filename puro.
-                finalImageUrl = fileName;
+    // Pedidos Filtrados
+    const filteredOrders = useMemo(() => {
+        return orders.filter(order => {
+            const matchesId = !filterOrderId || order.id?.toString().includes(filterOrderId);
+            const matchesStatus = !filterOrderStatus || order.status === filterOrderStatus;
 
-                // Aqui você faria a lógica para MOVER/SALVAR a `imageFile` para a pasta `assets` do servidor.
-                // Isso NÃO PODE ser feito diretamente do frontend por segurança do navegador.
-                // Você precisaria enviar `imageFile` para um endpoint no backend que faria o armazenamento no sistema de arquivos.
-                console.log(`SIMULANDO SALVAMENTO DE IMAGEM: O arquivo "${imageFile.name}" seria salvo como "${fileName}" no seu diretório de assets do servidor.`);
-                // Por agora, o `finalImageUrl` será o nome que você vai salvar no DB.
-            }
+            const total = order.total ?? 0;
+            const minTotal = parseFloat(filterOrderMinTotal);
+            const maxTotal = parseFloat(filterOrderMaxTotal);
 
+            const matchesMinTotal = isNaN(minTotal) || total >= minTotal;
+            const matchesMaxTotal = isNaN(maxTotal) || total <= maxTotal;
 
-            // Adapta o objeto para o formato Product (para o frontend)
-            // Lembre-se que ProductInputDTO tem campos como `amount`, `restaurantId`, `menuCategoryId` e `ingredients`
-            const productData: Product = {
-                id: product ? product.id : undefined, // Apenas se for uma edição
-                name,
-                description,
-                price: parseFloat(price),
-                imageUrl: finalImageUrl, // Usa o nome/URL simulado da imagem
-                ingredients: ingredients,
-                amount: parseInt(amount),
-                restaurantId: 1, // Forçado para 1 conforme solicitado
-                menuCategoryId: parseInt(menuCategoryId)
-            };
-            onSubmit(productData); // Envia o objeto Product completo
-        };
+            return matchesId && matchesStatus && matchesMinTotal && matchesMaxTotal;
+        });
+    }, [orders, filterOrderId, filterOrderStatus, filterOrderMinTotal, filterOrderMaxTotal]);
 
-        if (!isOpen) return null;
-
-        const menuCategories = [
-            { id: 1, name: 'Bebidas' },
-            { id: 2, name: 'Sobremesas' },
-            { id: 3, name: 'Lanches' },
-            { id: 4, name: 'Almoço' },
-        ];
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">{product ? 'Editar Produto' : 'Adicionar Novo Produto'}</h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Nome do Produto:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Descrição:</label>
-                            <textarea
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300 h-24"
-                                required
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label htmlFor="price" className="block text-gray-700 text-sm font-bold mb-2">Preço:</label>
-                            <input
-                                type="number"
-                                id="price"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                step="0.01"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="ingredients" className="block text-gray-700 text-sm font-bold mb-2">Ingredientes (separados por vírgula):</label>
-                            <input
-                                type="text"
-                                id="ingredients"
-                                value={ingredients.join(', ')}
-                                onChange={(e) => setIngredients(e.target.value.split(',').map(s => s.trim()))}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="amount" className="block text-gray-700 text-sm font-bold mb-2">Quantidade em Estoque:</label>
-                            <input
-                                type="number"
-                                id="amount"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="menuCategoryId" className="block text-gray-700 text-sm font-bold mb-2">Categoria do Menu:</label>
-                            <select
-                                id="menuCategoryId"
-                                value={menuCategoryId}
-                                onChange={(e) => setMenuCategoryId(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            >
-                                {menuCategories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="image" className="block text-gray-700 text-sm font-bold mb-2">Imagem do Produto:</label>
-                            <input
-                                type="file"
-                                id="image"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                            />
-                            {previewImage && (
-                                <div className="mt-4">
-                                    <p className="text-gray-600 text-sm mb-2">Pré-visualização:</p>
-                                    <img src={previewImage} alt="Pré-visualização do produto" className="w-24 h-24 object-cover rounded-md border border-gray-300" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex justify-end gap-4 mt-6">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                                disabled={productLoading}
-                            >
-                                {productLoading ? 'Salvando...' : (product ? 'Salvar Alterações' : 'Adicionar Produto')}
-                            </button>
-                        </div>
-                    </form>
-                    {productError && <p className="text-red-600 mt-4 text-center">{productError}</p>}
-                </div>
-            </div>
-        );
-    };
-
-    // ... (restante do código: OrderModal, UserModal, etc.)
-    const OrderModal = ({ isOpen, onClose, onSubmit, order }) => {
-        const [status, setStatus] = useState(order?.status || '');
-
-        useEffect(() => {
-            if (order) {
-                setStatus(order.status || '');
-            } else {
-                setStatus('');
-            }
-        }, [order]);
-
-        const handleSubmit = (e: React.FormEvent) => {
-            e.preventDefault();
-            onSubmit(order.id, status);
-        };
-
-        if (!isOpen || !order) return null;
-
-        const statusOptions: Order['status'][] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
-
-        const formatOrderDate = (dateInput: string | Date | undefined): string => {
-            if (!dateInput) {
-                return 'N/A';
-            }
-            try {
-                const date = new Date(dateInput);
-                if (isNaN(date.getTime())) {
-                    return 'Data Inválida';
-                }
-                return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-            } catch (e) {
-                console.error("Erro ao formatar data:", e);
-                return 'Erro na Data';
-            }
-        };
-
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">Atualizar Status do Pedido #{order.id}</h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <p className="text-gray-700">Cliente (ID): <span className="font-semibold">{order.userId || 'N/A'}</span></p>
-                        <p className="text-gray-700">Total: <span className="font-semibold">R$ {order.total ? order.total.toFixed(2) : '0.00'}</span></p>
-                        <p className="text-gray-700">Data do Pedido: <span className="font-semibold">{formatOrderDate(order.createdAt)}</span></p>
-                        <p className="text-gray-700 mb-4">Itens: <span className="font-semibold">{order.items ? order.items.map(item => `${item.qty}x ${item.name}`).join(', ') : 'N/A'}</span></p>
-
-                        <div>
-                            <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Novo Status:</label>
-                            <select
-                                id="status"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value as Order['status'])}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            >
-                                {statusOptions.map(option => (
-                                    <option key={option} value={option}>{option}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-4 mt-6">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                                disabled={orderLoading}
-                            >
-                                {orderLoading ? 'Salvando...' : 'Atualizar Status'}
-                            </button>
-                        </div>
-                    </form>
-                    {orderError && <p className="text-red-600 mt-4 text-center">{orderError}</p>}
-                </div>
-            </div>
-        );
-    };
-
-    function formatOrderDate(createdAt: string | Date | undefined): string {
-        if (!createdAt) return 'N/A';
-        const date = new Date(createdAt);
-        if (isNaN(date.getTime())) return 'Data Inválida';
-        return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-    }
-
-    type UserRole = 'CLIENT' | 'MANAGER' | 'ADMIN';
-
-    const UserModal = ({ isOpen, onClose, onSubmit, user }) => {
-        const [name, setName] = useState(user?.name || '');
-        const [email, setEmail] = useState(user?.email || '');
-        const [role, setRole] = useState<UserRole>(user?.role || 'CLIENT');
-
-        useEffect(() => {
-            if (user) {
-                setName(user.name || '');
-                setEmail(user.email || '');
-                setRole(user.role || 'CLIENT');
-            } else {
-                setName('');
-                setEmail('');
-                setRole('CLIENT');
-            }
-        }, [user]);
-
-        const handleSubmit = (e: React.FormEvent) => {
-            e.preventDefault();
-            const userData: User = {
-                ...user,
-                name,
-                email,
-                role
-            };
-            onSubmit(userData);
-        };
-
-        if (!isOpen || !user) return null;
-
-        const roleOptions: UserRole[] = ['CLIENT', 'MANAGER', 'ADMIN'];
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">Editar Usuário #{user.id}</h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="userName" className="block text-gray-700 text-sm font-bold mb-2">Nome:</label>
-                            <input
-                                type="text"
-                                id="userName"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="userEmail" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                            <input
-                                type="email"
-                                id="userEmail"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="userRole" className="block text-gray-700 text-sm font-bold mb-2">Função (Role):</label>
-                            <select
-                                id="userRole"
-                                value={role}
-                                onChange={(e) => setRole(e.target.value as UserRole)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            >
-                                {roleOptions.map(option => (
-                                    <option key={option} value={option}>{option}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-4 mt-6">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                                disabled={userLoading}
-                            >
-                                {userLoading ? 'Salvando...' : 'Salvar Alterações'}
-                            </button>
-                        </div>
-                    </form>
-                    {userError && <p className="text-red-600 mt-4 text-center">{userError}</p>}
-                </div>
-            </div>
-        );
-    };
-
+    // Usuários Filtrados
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => {
+            const matchesName = !filterUserName || user.name?.toLowerCase().includes(filterUserName.toLowerCase());
+            const matchesEmail = !filterUserEmail || user.email?.toLowerCase().includes(filterUserEmail.toLowerCase());
+            const matchesRole = !filterUserRole || user.role === filterUserRole;
+            return matchesName && matchesEmail && matchesRole;
+        });
+    }, [users, filterUserName, filterUserEmail, filterUserRole]);
 
     // --- Renderização Principal do AdminDashboard ---
     return (
@@ -633,7 +594,7 @@ const AdminDashboard = () => {
                 Gerencie produtos, pedidos e usuários do sistema.
             </p>
 
-            {/* --- Seção de Gerenciamento de Produtos --- (mantida como está) */}
+            {/* --- Seção de Gerenciamento de Produtos --- */}
             <div className="bg-gray-100 rounded-lg shadow-md p-6 mb-10 border border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                     <h3 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Produtos</h3>
@@ -645,6 +606,45 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
+                {/* --- Filtros de Produto --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label htmlFor="filterProductName" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Nome/Descrição:</label>
+                        <input
+                            type="text"
+                            id="filterProductName"
+                            value={filterProductName}
+                            onChange={(e) => setFilterProductName(e.target.value)}
+                            placeholder="Nome ou descrição do produto"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterProductMinPrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Mínimo:</label>
+                        <input
+                            type="number"
+                            id="filterProductMinPrice"
+                            value={filterProductMinPrice}
+                            onChange={(e) => setFilterProductMinPrice(e.target.value)}
+                            placeholder="R$ 0.00"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterProductMaxPrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Máximo:</label>
+                        <input
+                            type="number"
+                            id="filterProductMaxPrice"
+                            value={filterProductMaxPrice}
+                            onChange={(e) => setFilterProductMaxPrice(e.target.value)}
+                            placeholder="R$ 999.99"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
+
                 {productLoading && (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500"></div>
@@ -654,21 +654,27 @@ const AdminDashboard = () => {
                 {productError && <p className="text-red-600 text-center py-4">{productError}</p>}
 
                 {!productLoading && !productError && (
-                    products.length > 0 ? (
+                    filteredProducts.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                                 <thead className="bg-gray-100">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Nome</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Preço</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Estoque</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Nome</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Preço</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Estoque</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Categoria ID</th> {/* Adicionado */}
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {products.map((product) => (
+                                    {filteredProducts.map((product) => (
                                         <tr key={product.id} className="hover:bg-gray-50 transition-colors duration-200">
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{product.id}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{product.name}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">R$ {(product.price ?? 0).toFixed(2)}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{product.stock}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{product.amount}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{product.menuCategoryId}</td> {/* Exibe Categoria ID */}
                                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
                                                     onClick={() => { setSelectedProduct(product); setIsProductModalOpen(true); }}
@@ -689,15 +695,71 @@ const AdminDashboard = () => {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-gray-600 text-center py-4">Nenhum produto cadastrado. Adicione um novo!</p>
+                        <p className="text-gray-600 text-center py-4">Nenhum produto encontrado com os filtros aplicados.</p>
                     )
                 )}
             </div>
 
-            {/* --- Seção de Gerenciamento de Pedidos --- (mantida como está) */}
+            {/* --- Seção de Gerenciamento de Pedidos --- */}
             <div className="bg-gray-100 rounded-lg shadow-md p-6 mb-10 border border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                     <h3 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Pedidos</h3>
+                </div>
+
+                {/* --- Filtros de Pedidos --- */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div>
+                        <label htmlFor="filterOrderId" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por ID do Pedido:</label>
+                        <input
+                            type="text"
+                            id="filterOrderId"
+                            value={filterOrderId}
+                            onChange={(e) => setFilterOrderId(e.target.value)}
+                            placeholder="ID do Pedido"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterOrderStatus" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Status:</label>
+                        <select
+                            id="filterOrderStatus"
+                            value={filterOrderStatus}
+                            onChange={(e) => setFilterOrderStatus(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Todos</option>
+                            <option value="PENDING">PENDENTE</option>
+                            <option value="CONFIRMED">CONFIRMADO</option>
+                            <option value="PREPARING">PREPARANDO</option>
+                            <option value="READY">PRONTO</option>
+                            <option value="DELIVERED">ENTREGUE</option>
+                            <option value="CANCELLED">CANCELADO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="filterOrderMinTotal" className="block text-sm font-medium text-gray-700 mb-1">Total Mínimo:</label>
+                        <input
+                            type="number"
+                            id="filterOrderMinTotal"
+                            value={filterOrderMinTotal}
+                            onChange={(e) => setFilterOrderMinTotal(e.target.value)}
+                            placeholder="R$ 0.00"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterOrderMaxTotal" className="block text-sm font-medium text-gray-700 mb-1">Total Máximo:</label>
+                        <input
+                            type="number"
+                            id="filterOrderMaxTotal"
+                            value={filterOrderMaxTotal}
+                            onChange={(e) => setFilterOrderMaxTotal(e.target.value)}
+                            placeholder="R$ 999.99"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
                 </div>
 
                 {orderLoading && (
@@ -709,16 +771,22 @@ const AdminDashboard = () => {
                 {orderError && <p className="text-red-600 text-center py-4">{orderError}</p>}
 
                 {!orderLoading && !orderError && (
-                    orders.length > 0 ? (
+                    filteredOrders.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                                 <thead className="bg-gray-100">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Cliente (ID)</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Total</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Data</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Status</th><th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Cliente (ID)</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Total</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Data</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Método Consumo</th> {/* Adicionado */}
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {orders.map((order) => (
+                                    {filteredOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50 transition-colors duration-200">
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.id}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.userId || 'N/A'}</td>
@@ -737,6 +805,7 @@ const AdminDashboard = () => {
                                                     {order.status}
                                                 </span>
                                             </td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{order.consumptionMethod || 'N/A'}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
                                                     onClick={() => { setSelectedOrder(order); setIsOrderModalOpen(true); }}
@@ -757,7 +826,7 @@ const AdminDashboard = () => {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-gray-600 text-center py-4">Nenhum pedido recente para exibir.</p>
+                        <p className="text-gray-600 text-center py-4">Nenhum pedido encontrado com os filtros aplicados.</p>
                     )
                 )}
             </div>
@@ -768,16 +837,56 @@ const AdminDashboard = () => {
                     <h3 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Usuários</h3>
                 </div>
 
+                {/* --- Filtros de Usuários --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label htmlFor="filterUserName" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Nome:</label>
+                        <input
+                            type="text"
+                            id="filterUserName"
+                            value={filterUserName}
+                            onChange={(e) => setFilterUserName(e.target.value)}
+                            placeholder="Nome do usuário"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterUserEmail" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Email:</label>
+                        <input
+                            type="email"
+                            id="filterUserEmail"
+                            value={filterUserEmail}
+                            onChange={(e) => setFilterUserEmail(e.target.value)}
+                            placeholder="email@exemplo.com"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterUserRole" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Função (Role):</label>
+                        <select
+                            id="filterUserRole"
+                            value={filterUserRole}
+                            onChange={(e) => setFilterUserRole(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Todas</option>
+                            <option value="CLIENT">CLIENTE</option>
+                            <option value="MANAGER">GERENTE</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                </div>
+
                 {userLoading && (
                     <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div>
-                        <p className="ml-4 text-orange-600">Carregando usuários...</p>
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
+                        <p className="ml-4 text-purple-600">Carregando usuários...</p>
                     </div>
                 )}
                 {userError && <p className="text-red-600 text-center py-4">{userError}</p>}
 
                 {!userLoading && !userError && (
-                    users.length > 0 ? (
+                    filteredUsers.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                                 <thead className="bg-gray-100">
@@ -790,7 +899,7 @@ const AdminDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {users.map((user) => (
+                                    {filteredUsers.map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{user.id}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-800">{user.name}</td>
@@ -824,33 +933,37 @@ const AdminDashboard = () => {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-gray-600 text-center py-4">Nenhum usuário cadastrado.</p>
+                        <p className="text-gray-600 text-center py-4">Nenhum usuário encontrado com os filtros aplicados.</p>
                     )
                 )}
             </div>
 
-            {/* Modal de Produto */}
+            {/* Modals */}
             <ProductModal
                 isOpen={isProductModalOpen}
-                onClose={() => setIsProductModalOpen(false)}
+                onClose={() => { setIsProductModalOpen(false); setProductError(null); }}
                 onSubmit={handleAddEditProduct}
                 product={selectedProduct}
+                isLoading={productLoading}
+                error={productError}
             />
 
-            {/* Modal de Pedido */}
             <OrderModal
                 isOpen={isOrderModalOpen}
-                onClose={() => setIsOrderModalOpen(false)}
+                onClose={() => { setIsOrderModalOpen(false); setOrderError(null); }}
                 onSubmit={handleUpdateOrderStatus}
                 order={selectedOrder}
+                isLoading={orderLoading}
+                error={orderError}
             />
 
-            {/* <--- NOVO Modal de Usuário */}
             <UserModal
                 isOpen={isUserModalOpen}
-                onClose={() => setIsUserModalOpen(false)}
+                onClose={() => { setIsUserModalOpen(false); setUserError(null); }}
                 onSubmit={handleEditUser}
                 user={selectedUser}
+                isLoading={userLoading}
+                error={userError}
             />
         </div>
     );

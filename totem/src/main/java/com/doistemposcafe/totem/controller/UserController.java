@@ -1,5 +1,7 @@
 package com.doistemposcafe.totem.controller;
 
+import com.doistemposcafe.totem.dto.Input.ForgotPasswordInputDTO;
+import com.doistemposcafe.totem.dto.Input.ResetPasswordInputDTO;
 import com.doistemposcafe.totem.dto.Input.UserInputDTO;
 import com.doistemposcafe.totem.dto.Output.UserOutputDTO;
 import com.doistemposcafe.totem.dto.mapper.UserMapper;
@@ -19,9 +21,12 @@ public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
 
-    public UserController(UserService userService, UserMapper userMapper) {
+
+
+    public UserController(UserService userService, UserMapper userMapper ) {
         this.userService = userService;
         this.userMapper = userMapper;
+
     }
 
     @GetMapping("/list")
@@ -43,14 +48,38 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('ADMIN', 'MANAGER', 'CLIENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CLIENT')")
     public ResponseEntity<UserOutputDTO> updateUser(@PathVariable Long id, @RequestBody UserInputDTO dto) {
         return ResponseEntity.ok(userService.updateUser(dto, id));
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         boolean deleted = userService.deleteUser(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordInputDTO request) {
+        try {
+            userService.createPasswordResetTokenForUser(request.getEmail());
+            return ResponseEntity.ok("Se um e-mail correspondente foi encontrado, um link de redefinição de senha foi enviado.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao processar sua solicitação.");
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordInputDTO request) {
+        try {
+            if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest().body("A nova senha deve ter pelo menos 6 caracteres.");
+            }
+            userService.resetUserPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok("Senha redefinida com sucesso!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

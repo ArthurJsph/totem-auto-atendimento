@@ -101,3 +101,24 @@ export async function logout(): Promise<void> {
         throw error;
     }
 }
+
+export async function ForgotPassword(email: string): Promise<void> {
+    return api.post("/users/forgot-password", { email })
+        .then(() => {
+            console.log(`Email de recuperação enviado para: ${email}`);
+        })
+        .catch(error => {
+            console.error("Erro ao enviar email de recuperação:", error);
+            throw error;
+        });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  try {
+    await api.post("/users/reset-password", { token, newPassword });
+    console.log("Senha redefinida com sucesso!");
+  } catch (error) {
+    console.error("Erro ao redefinir senha:", error);
+    throw error; 
+  }
+}

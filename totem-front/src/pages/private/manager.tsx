@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks';
+import { useAuth } from '../../hooks/useAuth';
 import { Product } from '../../service/interfaces';
 import {
     getAllProducts,
@@ -10,7 +10,7 @@ import {
 } from '../../service/product';
 
 const ManagerDashboard: React.FC = () => {
-    const { authorities, logout } = useAuth();
+    const { authorities } = useAuth();
     const navigate = useNavigate();
 
     const [products, setProducts] = useState<Product[]>([]);
@@ -20,25 +20,25 @@ const ManagerDashboard: React.FC = () => {
     const [productLoading, setProductLoading] = useState(false);
     const [productError, setProductError] = useState<string | null>(null);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    // --- Estados para o Filtro ---
+    const [filterName, setFilterName] = useState('');
+    const [filterMinPrice, setFilterMinPrice] = useState('');
+    const [filterMaxPrice, setFilterMaxPrice] = useState('');
 
-    const isManager = authorities.includes('MANAGER') || authorities.includes('ADMIN');
+    const hasManagerAccess = authorities.includes('MANAGER') || authorities.includes('ADMIN');
 
-    const getErrorMessage = (error: unknown): string => {
+    const getErrorMessage = useCallback((error: unknown): string => {
         if (error instanceof Error) {
             return error.message;
         }
-        if (typeof error === 'string') {
-            return error;
+        if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+            return error.message;
         }
         return 'Ocorreu um erro desconhecido.';
-    };
+    }, []);
 
-    // --- Funções de Fetch e CRUD para Produtos ---
-    const fetchProducts = async () => {
+    // --- Funções de Fetch e CRUD para Produtos (otimizadas com useCallback) ---
+    const fetchProducts = useCallback(async () => {
         setProductLoading(true);
         setProductError(null);
         try {
@@ -50,23 +50,17 @@ const ManagerDashboard: React.FC = () => {
         } finally {
             setProductLoading(false);
         }
-    };
+    }, [getErrorMessage]);
 
-    const handleAddEditProduct = async (productData: Product) => {
+    const handleAddEditProduct = useCallback(async (productData: Product) => {
         setProductLoading(true);
         setProductError(null);
         try {
             if (productData.id) {
                 await updateProduct(productData);
             } else {
-                // Ao salvar, certifique-se de que productData não tem um ID
-                const productToSave: Omit<Product, 'id'> = {
-                    name: productData.name,
-                    description: productData.description,
-                    price: productData.price,
-                    imageUrl: productData.imageUrl
-                };
-                await saveProduct(productToSave); // Use o tipo Omit se seu saveProduct não aceita ID
+                const { id, ...productToSave } = productData;
+                await saveProduct(productToSave as Omit<Product, 'id'>);
             }
             setIsProductModalOpen(false);
             setSelectedProduct(null);
@@ -77,9 +71,9 @@ const ManagerDashboard: React.FC = () => {
         } finally {
             setProductLoading(false);
         }
-    };
+    }, [fetchProducts, getErrorMessage]);
 
-    const handleDeleteProduct = async (productId: string | number) => {
+    const handleDeleteProduct = useCallback(async (productId: string | number) => {
         if (window.confirm("Tem certeza que deseja excluir este produto?")) {
             setProductLoading(true);
             setProductError(null);
@@ -93,13 +87,30 @@ const ManagerDashboard: React.FC = () => {
                 setProductLoading(false);
             }
         }
-    };
+    }, [fetchProducts, getErrorMessage]);
 
     useEffect(() => {
-        if (isManager) {
+        if (hasManagerAccess) {
             fetchProducts();
         }
-    }, [isManager]);
+    }, [hasManagerAccess, fetchProducts]);
+
+    // --- Lógica de Filtragem (useMemo para otimização) ---
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            const matchesName = product.name?.toLowerCase().includes(filterName.toLowerCase()) ||
+                                product.description?.toLowerCase().includes(filterName.toLowerCase());
+
+            const price = product.price ?? 0;
+            const minPrice = parseFloat(filterMinPrice);
+            const maxPrice = parseFloat(filterMaxPrice);
+
+            const matchesMinPrice = isNaN(minPrice) || price >= minPrice;
+            const matchesMaxPrice = isNaN(maxPrice) || price <= maxPrice;
+
+            return matchesName && matchesMinPrice && matchesMaxPrice;
+        });
+    }, [products, filterName, filterMinPrice, filterMaxPrice]);
 
     // --- Componentes Modais Internos ---
     interface ProductModalProps {
@@ -107,61 +118,51 @@ const ManagerDashboard: React.FC = () => {
         onClose: () => void;
         onSubmit: (product: Product) => void;
         product: Product | null;
+        isLoading: boolean;
+        error: string | null;
     }
 
-    const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSubmit, product }) => {
+    const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSubmit, product, isLoading, error }) => {
         const [name, setName] = useState(product?.name || '');
         const [description, setDescription] = useState(product?.description || '');
         const [price, setPrice] = useState(product?.price?.toString() || '');
-        const [imageFile, setImageFile] = useState<File | null>(null);
-        const [previewImage, setPreviewImage] = useState<string | null>(product?.imageUrl || null);
+        const [imageUrl, setImageUrl] = useState(product?.imageUrl || ''); // Mantém a URL da imagem
 
         useEffect(() => {
             if (product) {
                 setName(product.name || '');
                 setDescription(product.description || '');
                 setPrice(product.price?.toString() || '');
-                setPreviewImage(product.imageUrl || null);
-                setImageFile(null);
+                setImageUrl(product.imageUrl || '');
             } else {
                 setName('');
                 setDescription('');
                 setPrice('');
-                setImageFile(null);
-                setPreviewImage(null);
+                setImageUrl('');
             }
-        }, [product]);
+        }, [product, isOpen]);
 
-        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                setImageFile(file);
-                setPreviewImage(URL.createObjectURL(file));
-            } else {
-                setImageFile(null);
-                setPreviewImage(null);
-            }
-        };
-
-        const handleSubmit = async (e: React.FormEvent) => {
+        const handleSubmit = (e: React.FormEvent) => {
             e.preventDefault();
-            let uploadedImageUrl: string | undefined = previewImage || undefined;
 
-            if (imageFile) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                uploadedImageUrl = `https://via.placeholder.com/150/FFA500/FFFFFF?text=${name.replace(/\s/g, '+')}_${Date.now()}`;
-                console.log("IMAGEM UPLOADADA (simulado):", uploadedImageUrl);
+            // Validação básica
+            if (!name.trim()) {
+                alert('O nome do produto é obrigatório.');
+                return;
+            }
+            if (parseFloat(price) <= 0 || isNaN(parseFloat(price))) {
+                alert('O preço deve ser um número positivo.');
+                return;
             }
 
-            // Adapta o objeto para o formato Product
             const productData: Product = {
-                id: product ? product.id : undefined,
-                name,
-                description,
+                id: product?.id,
+                name: name.trim(),
+                description: description.trim(),
                 price: parseFloat(price),
-                imageUrl: uploadedImageUrl
+                imageUrl: imageUrl.trim() || undefined
             };
-            onSubmit(productData); // Envia o objeto Product completo
+            onSubmit(productData);
         };
 
         if (!isOpen) return null;
@@ -204,41 +205,37 @@ const ManagerDashboard: React.FC = () => {
                                 required
                             />
                         </div>
-
                         <div>
-                            <label htmlFor="image" className="block text-gray-700 text-sm font-bold mb-2">Imagem do Produto:</label>
+                            <label htmlFor="imageUrl" className="block text-gray-700 text-sm font-bold mb-2">URL da Imagem:</label>
                             <input
-                                type="file"
-                                id="image"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                type="url"
+                                id="imageUrl"
+                                value={imageUrl}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
                             />
-                            {previewImage && (
-                                <div className="mt-4">
-                                    <p className="text-gray-600 text-sm mb-2">Pré-visualização:</p>
-                                    <img src={previewImage} alt="Pré-visualização do produto" className="w-24 h-24 object-cover rounded-md border border-gray-300" />
-                                </div>
-                            )}
+                            {/* Pré-visualização da imagem removida aqui */}
                         </div>
                         <div className="flex justify-end gap-4 mt-6">
                             <button
                                 type="button"
                                 onClick={onClose}
                                 className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
+                                disabled={isLoading}
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                                disabled={productLoading}
+                                disabled={isLoading}
                             >
-                                {productLoading ? 'Salvando...' : (product ? 'Salvar Alterações' : 'Adicionar Produto')}
+                                {isLoading ? 'Salvando...' : (product ? 'Salvar Alterações' : 'Adicionar Produto')}
                             </button>
                         </div>
                     </form>
-                    {productError && <p className="text-red-600 mt-4 text-center">{productError}</p>}
+                    {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
                 </div>
             </div>
         );
@@ -248,7 +245,6 @@ const ManagerDashboard: React.FC = () => {
         <div className="min-h-screen bg-gray-100 p-6 md:p-10">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-4xl font-extrabold text-gray-900">Dashboard do Gerente</h1>
-                
             </div>
 
             <p className="text-lg text-gray-700 mb-8">
@@ -258,46 +254,89 @@ const ManagerDashboard: React.FC = () => {
             {/* --- Seção de Gerenciamento de Produtos --- */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-10">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-                    <h3 className="text-2xl font-semibold text-gray-800">Gerenciamento de Produtos</h3>
+                    <h3 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Gerenciamento de Produtos</h3>
                     <button
                         onClick={() => { setSelectedProduct(null); setIsProductModalOpen(true); }}
-                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition w-full sm:w-auto"
                     >
                         Adicionar Produto
                     </button>
                 </div>
 
-                {productLoading && <p>Carregando produtos...</p>}
-                {productError && <p className="text-red-500">{productError}</p>}
+                {/* --- Filtros --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label htmlFor="filterName" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Nome/Descrição:</label>
+                        <input
+                            type="text"
+                            id="filterName"
+                            value={filterName}
+                            onChange={(e) => setFilterName(e.target.value)}
+                            placeholder="Nome ou descrição do produto"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterMinPrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Mínimo:</label>
+                        <input
+                            type="number"
+                            id="filterMinPrice"
+                            value={filterMinPrice}
+                            onChange={(e) => setFilterMinPrice(e.target.value)}
+                            placeholder="R$ 0.00"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="filterMaxPrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Máximo:</label>
+                        <input
+                            type="number"
+                            id="filterMaxPrice"
+                            value={filterMaxPrice}
+                            onChange={(e) => setFilterMaxPrice(e.target.value)}
+                            placeholder="R$ 999.99"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
+
+                {productLoading && <p className="text-center text-blue-600 text-lg">Carregando produtos...</p>}
+                {productError && <p className="text-red-500 text-center text-lg">{productError}</p>}
 
                 {!productLoading && !productError && (
-                    products.length > 0 ? (
+                    filteredProducts.length > 0 ? (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                                <thead className="bg-gray-200">
+                            <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+                                <thead className="bg-gray-200 text-gray-700">
                                     <tr>
-                                        <th className="px-4 py-2">ID</th>
-                                        <th className="px-4 py-2">Nome</th>
-                                        <th className="px-4 py-2">Preço</th>
-                                        <th className="px-4 py-2">Ações</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">ID</th>
+                                        {/* Coluna de Imagem REMOVIDA AQUI */}
+                                        <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Nome</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Descrição</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Preço</th>
+                                        <th className="px-4 py-3 text-center text-sm font-semibold uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {products.map((product) => (
+                                <tbody className="divide-y divide-gray-200">
+                                    {filteredProducts.map((product) => (
                                         <tr key={product.id}>
-                                            <td className="border px-4 py-2">{product.id}</td>
-                                            <td className="border px-4 py-2">{product.name}</td>
-                                            <td className="border px-4 py-2">R$ {(product.price ?? 0).toFixed(2)}</td>
-                                            <td className="border px-4 py-2">
+                                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">{product.id}</td>
+                                            {/* Célula de Imagem REMOVIDA AQUI */}
+                                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 font-medium">{product.name}</td>
+                                            <td className="px-4 py-2 text-sm text-gray-600 max-w-xs overflow-hidden text-ellipsis">{product.description}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">R$ {(product.price ?? 0).toFixed(2)}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap text-center">
                                                 <button
                                                     onClick={() => { setSelectedProduct(product); setIsProductModalOpen(true); }}
-                                                    className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2"
+                                                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md text-sm transition mr-2"
                                                 >
                                                     Editar
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteProduct(product.id as number)}
-                                                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                                                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-sm transition"
                                                 >
                                                     Excluir
                                                 </button>
@@ -308,7 +347,7 @@ const ManagerDashboard: React.FC = () => {
                             </table>
                         </div>
                     ) : (
-                        <p>Nenhum produto cadastrado.</p>
+                        <p className="text-center text-gray-600 mt-4">Nenhum produto encontrado com os filtros aplicados.</p>
                     )
                 )}
             </div>
@@ -316,9 +355,11 @@ const ManagerDashboard: React.FC = () => {
             {/* Modal de Produto */}
             <ProductModal
                 isOpen={isProductModalOpen}
-                onClose={() => setIsProductModalOpen(false)}
+                onClose={() => { setIsProductModalOpen(false); setProductError(null); }}
                 onSubmit={handleAddEditProduct}
                 product={selectedProduct}
+                isLoading={productLoading}
+                error={productError}
             />
         </div>
     );

@@ -38,7 +38,7 @@ export const useOrder = (): UseOrderHook => {
   const isCartEmpty = pedido.length === 0;
 
   const navigateToHome = useCallback(() => {
-    navigate("/");
+    navigate("/home");
   }, [navigate]);
 
   const navigateToPayment = useCallback(() => {

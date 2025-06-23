@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-
-import { api } from '../../service/api'; 
-
-
 import { useNavigate } from 'react-router-dom';
+import { ForgotPassword } from '../../service/auth'; // Importe a função forgotPassword daqui. Ajuste o caminho se necessário.
+
 const Recuperar: React.FC = () => {
     const [email, setEmail] = useState('');
     const [triedSubmit, setTriedSubmit] = useState(false);
@@ -19,31 +17,38 @@ const Recuperar: React.FC = () => {
         setTriedSubmit(true);
       
         if (!email || !isValidEmail(email)) {
-          toast.error('Por favor, informe um email válido');
-          return;
+            toast.error('Por favor, informe um email válido.');
+            return;
         }
       
         try {
-            await api.post('/usuario/senha/esqueceu/', { email });
-            toast.success(`Email de recuperação enviado para: ${email}`);
-            navigate('/redefinir-senha');
-          } catch (error: unknown) {
-            let message = 'Erro ao enviar o email';
-            if (error && typeof error === 'object' && 'response' in error) {
-              const err = error as { response?: { data?: { message?: string } } };
-              message = err.response?.data?.message || message;
+            // Usamos a função forgotPassword importada
+            await ForgotPassword(email);
+            toast.success(`Email de recuperação enviado para: ${email}. Verifique sua caixa de entrada.`);
+            // O ideal é não redirecionar para /redefinir-senha aqui,
+            // mas sim informar o usuário para verificar o email.
+            // O redirecionamento para /redefinir-senha deve acontecer APENAS
+            // quando o usuário clicar no link do email, que conterá o token.
+            // Por enquanto, vou manter o redirecionamento para fins de demonstração,
+            // mas considere remover ou alterar para uma página de "verifique seu email".
+            navigate('/redefinir-senha'); // Você pode ajustar esta navegação se preferir.
+        } catch (error: any) { // 'any' para capturar erros de Axios mais facilmente.
+            let message = 'Erro ao enviar o email de recuperação.';
+            if (error.response?.data?.message) {
+                message = error.response.data.message;
+            } else if (error.message) {
+                message = error.message;
             }
             toast.error(message);
-          }
-      };
+        }
+    };
       
-
     return (
         <div className="bg-gray-200 flex items-center justify-center min-h-screen">
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
                 <h2 className="text-gray-800 text-2xl font-semibold mb-6 text-center">Esqueceu a Senha</h2>
                 <p className="text-gray-600 mb-6 text-center">
-                    Digite seu email para receber as instruções de recuperação de senha
+                    Digite seu email para receber as instruções de recuperação de senha.
                 </p>
                 
                 <form onSubmit={handleSubmit}>
@@ -58,25 +63,25 @@ const Recuperar: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className={`pl-10 pr-4 py-2 w-full rounded-lg bg-gray-100 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                                    triedSubmit && !email ? 'border border-red-500' : ''
+                                    triedSubmit && !email || (triedSubmit && email && !isValidEmail(email)) ? 'border border-red-500' : ''
                                 }`}
                             />
                         </div>
                         {triedSubmit && !email && (
                             <p className="text-red-500 text-sm mt-1 text-left pl-3">
-                                Por favor, informe seu email
+                                Por favor, informe seu email.
                             </p>
                         )}
                         {triedSubmit && email && !isValidEmail(email) && (
                             <p className="text-red-500 text-sm mt-1 text-left pl-3">
-                                Por favor, informe um email válido
+                                Por favor, informe um email válido.
                             </p>
                         )}
                     </div>
                     
                     <button
                         type="submit"
-                        className="w-full py-2 rounded-lg bg-red-700 hover:bg-red text-white font-semibold transition-colors"
+                        className="w-full py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold transition-colors"
                     >
                         Enviar Instruções
                     </button>

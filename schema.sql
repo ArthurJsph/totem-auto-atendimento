@@ -89,15 +89,6 @@ CREATE TABLE IF NOT EXISTS payment (
     payment_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Dados fictícios
-
--- Managers
-INSERT INTO manager (name, email, password) VALUES
-('Ana Silva', 'ana@delivery.com', 'senha123'),
-('Carlos Souza', 'carlos@delivery.com', 'segredo456'),
-('Fernanda Lima', 'fernanda@delivery.com', '123456'),
-('Rafael Alves', 'rafael@delivery.com', 'abc123'),
-('Juliana Rocha', 'juliana@delivery.com', 'senha789');
 
 -- Restaurant
 INSERT INTO restaurant (id, name, slug, description, avatar_image_url, cover_image_url, created_at, updated_at, manager_id) VALUES
@@ -135,12 +126,55 @@ INSERT INTO product (
 ('Refrigerante Lata', 'Diversos sabores de refrigerante em lata.', 5.00, 'refrigerante-lata.jpg', ARRAY['Refrigerante'], 1, 1, 1, NOW(), NOW()),
 ('Cerveja Artesanal', 'Seleção de cervejas artesanais locais.', 15.00, 'cerveja-artesanal.jpg', ARRAY['Cerveja'], 1, 1, 1, NOW(), NOW());
 
--- Orders (exemplos)
-INSERT INTO orders (name, description, price, user_id, total, status, consumption_method, restaurant_id, created_at, updated_at) VALUES
-('Pedido 1', 'Pedido de bebidas variadas', 25.00, 1, 25.00, 'PENDING', 'DELIVERY', 1, NOW(), NOW()),
-('Pedido 2', 'Sobremesas para festa', 40.00, 2, 40.00, 'DELIVERED', 'PICKUP', 1, NOW(), NOW());
 
 -- Orders_Product (exemplos)
 INSERT INTO orders_product (name, product_id, order_id, price, quantity, status, created_at, updated_at) VALUES
 ('Café Expresso', (SELECT id FROM product WHERE name = 'Café Expresso'), 1, 4.50, 2, 'PREPARING', NOW(), NOW()),
 ('Torta de Limão', (SELECT id FROM product WHERE name = 'Torta de Limão'), 2, 7.00, 3, 'DELIVERED', NOW(), NOW());
+
+
+CREATE TABLE password_reset_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
+    expiry_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    CONSTRAINT fk_user
+        FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE -- Opcional: Se o usuário for deletado, os tokens associados também serão
+);
+
+
+
+-- Orders (30 novos pedidos com user_id variando de 1 a 10 e restaurant_id = 1)
+INSERT INTO orders (name, description, price, user_id, total, status, consumption_method, restaurant_id, created_at, updated_at) VALUES
+('Pedido de Café da Manhã', 'Seleção de itens para o café da manhã', 32.50, 1, 32.50, 'PROCESSING', 'DELIVERY', 1, NOW(), NOW()),
+('Almoço Rápido', 'Lanche e bebida para o almoço', 25.00, 2, 25.00, 'PREPARING', 'PICKUP', 1, NOW(), NOW()),
+('Doces para o Escritório', 'Variedade de sobremesas para a equipe', 55.00, 3, 55.00, 'PENDING', 'DELIVERY', 1, NOW(), NOW()),
+('Lanche da Tarde Saudável', 'Opções leves e nutritivas', 28.00, 4, 28.00, 'DELIVERED', 'ON_SITE', 1, NOW(), NOW()),
+('Reunião de Negócios', 'Café e lanches para reunião', 70.00, 5, 70.00, 'COMPLETED', 'DELIVERY', 1, NOW(), NOW()),
+('Break Rápido', 'Um café e um salgado', 14.50, 6, 14.50, 'CANCELLED', 'PICKUP', 1, NOW(), NOW()),
+('Festa de Aniversário', 'Grandes quantidades de produtos', 120.00, 7, 120.00, 'PENDING', 'DELIVERY', 1, NOW(), NOW()),
+('Pedidos Avulsos', 'Itens diversos', 42.00, 8, 42.00, 'PROCESSING', 'ON_SITE', 1, NOW(), NOW()),
+('Jantar Leve', 'Sopa e suco', 17.00, 9, 17.00, 'PREPARING', 'DELIVERY', 1, NOW(), NOW()),
+('Sobremesa da Noite', 'Brownie e sorvete', 19.50, 10, 19.50, 'DELIVERED', 'PICKUP', 1, NOW(), NOW()),
+('Lanche para Crianças', 'Muffin e suco', 16.50, 1, 16.50, 'PENDING', 'ON_SITE', 1, NOW(), NOW()),
+('Café Expresso e Torta', 'Combinação clássica', 11.50, 2, 11.50, 'PROCESSING', 'DELIVERY', 1, NOW(), NOW()),
+('Salgados Variados', 'Mix de coxinhas e pastéis', 28.00, 3, 28.00, 'PREPARING', 'PICKUP', 1, NOW(), NOW()),
+('Bebidas para o Verão', 'Smoothies e sodas', 35.00, 4, 35.00, 'DELIVERED', 'ON_SITE', 1, NOW(), NOW()),
+('Café da Tarde Especial', 'Chá e cheesecake', 17.50, 5, 17.50, 'COMPLETED', 'DELIVERY', 1, NOW(), NOW()),
+('Pedidos para Evento', 'Grandes quantidades de bebidas', 85.00, 6, 85.00, 'PENDING', 'PICKUP', 1, NOW(), NOW()),
+('Relax na Cafeteria', 'Latte e croissant', 18.00, 7, 18.00, 'PROCESSING', 'ON_SITE', 1, NOW(), NOW()),
+('Saudável e Rápido', 'Wrap e água de coco', 18.50, 8, 18.50, 'PREPARING', 'DELIVERY', 1, NOW(), NOW()),
+('Presente Doce', 'Caixa de brigadeiros', 24.00, 9, 24.00, 'DELIVERED', 'PICKUP', 1, NOW(), NOW()),
+('Pós-Treino', 'Iogurte e frutas', 15.50, 10, 15.50, 'PENDING', 'ON_SITE', 1, NOW(), NOW()),
+('Café da Manhã Completo', 'Pão de queijo e cappuccino', 14.00, 1, 14.00, 'PROCESSING', 'DELIVERY', 1, NOW(), NOW()),
+('Almoço Veggie', 'Sopa de legumes e salada', 22.50, 2, 22.50, 'PREPARING', 'PICKUP', 1, NOW(), NOW()),
+('Guloseimas para o Fim de Semana', 'Cookies e refrigerante', 14.00, 3, 14.00, 'DELIVERED', 'ON_SITE', 1, NOW(), NOW()),
+('Pedido Corporativo', 'Diversos lanches para equipe', 95.00, 4, 95.00, 'COMPLETED', 'DELIVERY', 1, NOW(), NOW()),
+('Primeiro Pedido', 'Experimentando alguns itens', 30.00, 5, 30.00, 'PENDING', 'PICKUP', 1, NOW(), NOW()),
+('Pedido Personalizado', 'Itens específicos', 26.00, 6, 26.00, 'PROCESSING', 'ON_SITE', 1, NOW(), NOW()),
+('Refeição Rápida', 'Mini pizza e cerveja', 22.00, 7, 22.00, 'PREPARING', 'DELIVERY', 1, NOW(), NOW()),
+('Festa Infantil', 'Churros e brigadeiros', 60.00, 8, 60.00, 'DELIVERED', 'PICKUP', 1, NOW(), NOW()),
+('Relax com Chá', 'Chá e muffin', 11.50, 9, 11.50, 'PENDING', 'ON_SITE', 1, NOW(), NOW()),
+('Último Pedido do Dia', 'Café e cookie', 8.50, 10, 8.50, 'PROCESSING', 'DELIVERY', 1, NOW(), NOW());

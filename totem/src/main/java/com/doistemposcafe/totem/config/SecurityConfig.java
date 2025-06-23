@@ -50,6 +50,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/list").permitAll()
                         .requestMatchers("/api/menu-categories/list").permitAll()
                         .requestMatchers("/api/users/save").permitAll()
+                        .requestMatchers("/api/users/reset-password").permitAll()
+                        .requestMatchers("/api/users/forgot-password").permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers

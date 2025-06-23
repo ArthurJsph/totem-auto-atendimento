@@ -1,23 +1,27 @@
 import { Link, useNavigate } from "react-router-dom";
-import { getToken, logout } from "../../service/auth";
-import { useState, useEffect } from "react";
+// REMOVIDO: import { getToken, logout } from "../../service/auth"; // Não precisamos mais do getToken/logout diretos aqui
+import { useState, useEffect } from "react"; // useEffect ainda pode ser útil para outras lógicas, mas não para 'loggedIn'
 import { useAuth } from "../../hooks/useAuth"; // Importa o hook de autenticação
 
 export default function Navbar() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  // REMOVIDO: const [loggedIn, setLoggedIn] = useState(false); // Substituído por isAuthenticated do useAuth
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { authorities } = useAuth();
 
-  const isAdmin = authorities.includes("ADMIN");
+  // >>> NOVO: Obtenha isAuthenticated e authorities do hook useAuth
+  const { isAuthenticated, authorities, logout: authLogout } = useAuth(); // Renomeado logout para authLogout para evitar conflito
 
-  useEffect(() => {
-    setLoggedIn(!!getToken());
-  }, []);
+  // Verifica se o usuário tem a role ADMIN OU MANAGER
+  const hasDashboardAccess = authorities.includes("ADMIN") || authorities.includes("MANAGER");
+
+  // REMOVIDO: useEffect para setLoggedIn, pois isAuthenticated já faz isso
+  // useEffect(() => {
+  //   setLoggedIn(!!getToken());
+  // }, []);
 
   function handleLogout() {
-    logout();
-    setLoggedIn(false);
+    authLogout(); // Chama a função logout do hook useAuth
+    // Não precisa de setLoggedIn(false) aqui, pois o useAuth já atualiza seu estado
     navigate("/login");
   }
 
@@ -27,7 +31,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between relative z-50">
-      {/* Logo à esquerda - remova flex-1 */}
+      {/* Logo à esquerda */}
       <div className="flex items-center">
         <img
           src="src/assets/logo.png"
@@ -36,18 +40,18 @@ export default function Navbar() {
         />
       </div>
 
-      {/* Links centralizados para telas maiores (desktop) - Adicione flex-1 e justify-center */}
+      {/* Links centralizados para telas maiores (desktop) */}
       <div className="hidden md:flex flex-1 justify-center">
         <div className="space-x-6 text-gray-700 font-medium">
-          {/* MUDANÇA AQUI: Altere to="/" para to="/home" */}
           <Link to="/home" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
             Home
           </Link>
           <Link to="/pedido" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
             Pedidos
           </Link>
-          {isAdmin && (
-            <Link to="/admin" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
+          {/* MUDANÇA AQUI: Condição para Dashboard */}
+          {hasDashboardAccess && (
+            <Link to="/manager" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
               Dashboard
             </Link>
           )}
@@ -57,9 +61,9 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Botões de Login/Sair para telas maiores (desktop) - remova flex-1, adicione ml-auto */}
+      {/* Botões de Login/Sair para telas maiores (desktop) */}
       <div className="hidden md:flex justify-end items-center space-x-4 ml-auto">
-        {!loggedIn ? (
+        {!isAuthenticated ? ( // Use isAuthenticated do useAuth
           <>
             <Link to="/login" className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition">
               Entrar
@@ -78,7 +82,7 @@ export default function Navbar() {
       {/* Ícone de Hambúrguer (visível apenas em telas menores) */}
       <div className="md:hidden flex items-center">
         {/* Botões de Login/Sair ao lado do hambúrguer em mobile */}
-        {!loggedIn ? (
+        {!isAuthenticated ? ( // Use isAuthenticated do useAuth
           <Link to="/login" className="bg-red-700 text-white px-3 py-1.5 text-sm rounded shadow hover:bg-red-800 transition mr-2">
             Entrar
           </Link>
@@ -106,15 +110,15 @@ export default function Navbar() {
           rounded-bl-lg
         `}
       >
-        {/* MUDANÇA AQUI: Altere to="/" para to="/home" no menu mobile também */}
         <Link to="/home" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
           Home
         </Link>
         <Link to="/pedido" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
           Pedidos
         </Link>
-        {isAdmin && (
-          <Link to="/admin" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
+        {/* MUDANÇA AQUI: Condição para Dashboard no menu mobile */}
+        {hasDashboardAccess && (
+          <Link to="/manager" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
             Dashboard
           </Link>
         )}
@@ -122,7 +126,7 @@ export default function Navbar() {
           Sobre
         </Link>
 
-        {!loggedIn && (
+        {!isAuthenticated && ( // Use isAuthenticated do useAuth
           <>
             <div className="pt-4 border-t border-gray-200">
               <Link to="/registrar" className="block text-red-700 border border-red-700 px-4 py-2 rounded text-center hover:bg-red-50 transition" onClick={toggleMenu}>
