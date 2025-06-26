@@ -1,39 +1,33 @@
-```markdown
-# 🟢 Projeto Totem - Sistema Fullstack Completo
+# Projeto Totem - Sistema Fullstack Completo
 
-Este repositório contém o sistema **Totem**, uma aplicação fullstack robusta que integra **React com Vite** para o frontend, **Spring Boot** para o backend e **PostgreSQL** como banco de dados. O projeto agora conta com **Docker** e **Docker Compose** para uma configuração e execução simplificadas.
+Este repositório contém o sistema **"Totem"**, uma aplicação fullstack robusta que integra **React com Vite** para o frontend, **Spring Boot** para o backend, **PostgreSQL** como banco de dados, utilizando **Docker e Docker Compose** para conteinerização e **Git** para controle de versão.
 
----
+## Tecnologias Utilizadas
 
-## ✨ Tecnologias Utilizadas
+| Categoria              | Tecnologia     | Versão Recomendada |
+| :--------------------- | :------------- | :----------------- |
+| **Frontend** | React          | -                  |
+|                        | Vite           | -                  |
+|                        | npm            | 10.x               |
+|                        | Node.js        | 22.x               |
+| **Backend** | Spring Boot    | 2.2                |
+|                        | Java           | 17                 |
+|                        | Maven          | 3.8+               |
+| **Banco de Dados** | PostgreSQL     | 15 ou superior     |
+| **Contêineres** | Docker         | Mais recente      |
+|                        | Docker Compose | Mais recente      |
+| **Controle de Versão** | Git            | Mais recente      |
 
-| Categoria   | Tecnologia       | Versão Recomendada |
-| :---------- | :--------------- | :----------------- |
-| **Frontend** | React            | -                  |
-|             | Vite             | -                  |
-|             | npm              | 10.x               |
-|             | Node.js          | 22.x               |
-| **Backend** | Spring Boot      | -                  |
-|             | Java             | 17                 |
-|             | Maven            | 3.8+               |
-| **Banco de Dados** | PostgreSQL       | 15 ou superior     |
-| **Contêineres** | Docker           | Mais recente      |
-|             | Docker Compose   | Mais recente      |
-| **Controle de Versão** | Git              | Mais recente      |
-
-
----
-
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 
 totem/
-├── totem/           \# Backend - Spring Boot (com Dockerfile)
+├── totem/             \# Backend - Spring Boot (com Dockerfile)
 │   ├── src/
 │   ├── pom.xml
 │   └── Dockerfile
-├── totem-front/     \# Frontend - React com Vite (com Dockerfile)
+├── totem-front/       \# Frontend - React com Vite (com Dockerfile)
 │   ├── src/
 │   ├── package.json
 │   └── Dockerfile
@@ -208,4 +202,3 @@ Aqui estão alguns comandos úteis para gerenciar seus contêineres:
 ---
 
 Se tiver alguma dúvida ou encontrar problemas, sinta-se à vontade para abrir uma issue no repositório!
-````
