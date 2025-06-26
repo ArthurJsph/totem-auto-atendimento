@@ -37,6 +37,7 @@ export interface Order {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+  items?: { qty: number; name: string }[];
 }
 
 export interface Payment {
@@ -76,4 +77,16 @@ export interface Manager {
     createdAt?: string;
     updatedAt?: string;
     role?: string;
+}
+
+export interface OrderItem {
+    id?: string | number;
+    name: string;
+    price: number;
+    quantity: number;
+    status: string;
+    createdAt?: string;
+    updatedAt?: string;
+    productId?: number; // Belongs to a product
+    orderId?: number; // Belongs to an order
 }

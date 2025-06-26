@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useLogin } from "../../hooks";
-
+import ImgLogin from "../../assets/login.png"; // Ajuste o caminho conforme necessário
 const UserIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +83,7 @@ function Login() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-      <div className="hidden md:flex w-0 md:w-2/3 h-screen bg-cover bg-center" style={{ backgroundImage: `url('/src/assets/login.png')` }}>
+      <div className="hidden md:flex w-0 md:w-2/3 h-screen bg-cover bg-center" style={{ backgroundImage: `url('${ImgLogin}')` }}>
         {/* Adiciona um overlay sutil para melhorar o contraste com o formulário */}
         <div className="w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
             {/* Opcional: Adicionar um texto ou logo sobre a imagem */}

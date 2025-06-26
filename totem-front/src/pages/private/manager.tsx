@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../../hooks/useAuth';
 import { Product } from '../../service/interfaces';
 import {
@@ -11,7 +11,7 @@ import {
 
 const ManagerDashboard: React.FC = () => {
     const { authorities } = useAuth();
-    const navigate = useNavigate();
+
 
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -59,7 +59,7 @@ const ManagerDashboard: React.FC = () => {
             if (productData.id) {
                 await updateProduct(productData);
             } else {
-                const { id, ...productToSave } = productData;
+                const productToSave = { ...productData };
                 await saveProduct(productToSave as Omit<Product, 'id'>);
             }
             setIsProductModalOpen(false);

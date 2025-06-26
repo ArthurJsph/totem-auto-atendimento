@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useParams, useNavigate } from "react-router-dom";
 import { produtos } from "./produto"; // ou de onde vier sua lista
 // Simule o usuário logado

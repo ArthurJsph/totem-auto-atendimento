@@ -1,3 +1,8 @@
+import PaoDeQueijo from "../../assets/pao-queijo-recheado.jpg";
+import WrapFrango from "../../assets/wrap-frango.jpg";
+import Cappucino from "../../assets/cappuccino.jpg";
+import Ambiente from "../../assets/ambiente.jpeg";
+
 const Sobre = () => {
   return (
     <main className="flex-grow w-full max-w-7xl mx-auto px-6 py-12">
@@ -25,22 +30,22 @@ const Sobre = () => {
             <img
               alt="Tradicional pão de queijo recheado."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src= "src/assets/pao-queijo-recheado.jpg"
+              src={PaoDeQueijo}
             />
             <img
               alt="Cappuccino encorpado e aromático."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="src/assets/cappuccino.jpg"
+              src={Cappucino}
             />
             <img
               alt="Ambiente interno do restaurante"
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="src/assets/ambiente.jpeg"
+              src={Ambiente}
             />
             <img
               alt="Delioso Wrap de frango."
               className="rounded-lg shadow-lg object-cover w-full h-48 md:h-60"
-              src="src/assets/wrap-frango.jpg"
+              src={WrapFrango}
             />
           </div>
         </div>

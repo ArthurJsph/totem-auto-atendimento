@@ -1,14 +1,7 @@
--- Este script é para inicializar o banco de dados 'totem' no seu contêiner PostgreSQL.
--- Ele remove tabelas existentes, recria a estrutura e insere dados iniciais essenciais.
--- Deve ser executado no banco de dados 'totem' (ou o nome configurado em POSTGRES_DB).
-
--- Inicia uma transação para garantir que todas as operações sejam atômicas.
 BEGIN;
 
--- Desabilita a verificação de chaves estrangeiras temporariamente.
 SET session_replication_role = 'replica';
 
--- Exclui tabelas existentes (se houver) na ordem inversa de suas dependências.
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
 DROP TABLE IF EXISTS orders_product CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
@@ -19,8 +12,6 @@ DROP TABLE IF EXISTS restaurant CASCADE;
 DROP TABLE IF EXISTS manager CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- Criação das Tabelas
--- Tabela users
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -33,7 +24,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table manager
 CREATE TABLE IF NOT EXISTS manager (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -43,7 +33,6 @@ CREATE TABLE IF NOT EXISTS manager (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table restaurant
 CREATE TABLE IF NOT EXISTS restaurant (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -56,7 +45,6 @@ CREATE TABLE IF NOT EXISTS restaurant (
     manager_id INTEGER
 );
 
--- Table menu_category
 CREATE TABLE IF NOT EXISTS menu_category (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -65,7 +53,6 @@ CREATE TABLE IF NOT EXISTS menu_category (
     updated_at TIMESTAMP(3) NOT NULL
 );
 
--- Table product
 CREATE TABLE IF NOT EXISTS product (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -80,7 +67,6 @@ CREATE TABLE IF NOT EXISTS product (
     updated_at TIMESTAMP(3) NOT NULL
 );
 
--- Table orders
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     name TEXT,
@@ -96,7 +82,6 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id INTEGER NOT NULL
 );
 
--- Table orders_product (mapeado para OrderItem.java)
 CREATE TABLE IF NOT EXISTS orders_product (
     id SERIAL PRIMARY KEY,
     name TEXT,
@@ -109,7 +94,6 @@ CREATE TABLE IF NOT EXISTS orders_product (
     updated_at TIMESTAMP NOT NULL
 );
 
--- Table payment
 CREATE TABLE IF NOT EXISTS payment (
     id SERIAL PRIMARY KEY,
     method VARCHAR(100) NOT NULL,
@@ -120,7 +104,6 @@ CREATE TABLE IF NOT EXISTS payment (
     payment_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table password_reset_tokens
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id BIGSERIAL PRIMARY KEY,
     token VARCHAR(255) NOT NULL UNIQUE,
@@ -128,7 +111,6 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     expiry_date TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
--- Adição de Chaves Estrangeiras (depois que todas as tabelas foram criadas)
 ALTER TABLE restaurant ADD CONSTRAINT fk_restaurant_manager
     FOREIGN KEY (manager_id) REFERENCES manager(id) ON DELETE SET NULL;
 
@@ -162,40 +144,24 @@ ALTER TABLE payment ADD CONSTRAINT fk_payment_order
 ALTER TABLE password_reset_tokens ADD CONSTRAINT fk_password_reset_user
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
+-- Inserção de Dados Essenciais (Restaurant, Menu Categories, Products)
 
--- Inserção de Dados Essenciais
--- ATENÇÃO: As senhas 'admin_password_hashed_aqui' DEVEM ser substituídas
--- por senhas JÁ HASHED, geradas pelo seu backend ou uma ferramenta de hashing.
-
--- Reinicializa a sequência users_id_seq
-SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 1) FROM users), true);
-
-
-
--- Reinicializa a sequência manager_id_seq
-SELECT setval('manager_id_seq', (SELECT COALESCE(MAX(id), 1) FROM manager), true);
-
-
--- 3. Restaurant (associado ao manager_id 1)
+-- Restaurante (ID 1, manager_id será NULO até você criar um manager via API e vincular)
 INSERT INTO restaurant (id, name, slug, description, avatar_image_url, cover_image_url, created_at, updated_at, manager_id) VALUES
-(1, 'Pizzaria Bella', 'pizzaria-bella', 'As melhores pizzas artesanais.', '/images/bella-avatar.png', '/images/bella-cover.jpg', NOW(), NOW(), 1);
+(1, 'Pizzaria Bella', 'pizzaria-bella', 'As melhores pizzas artesanais.', '/images/bella-avatar.png', '/images/bella-cover.jpg', NOW(), NOW(), NULL);
 
--- Reinicializa a sequência restaurant_id_seq
 SELECT setval('restaurant_id_seq', (SELECT COALESCE(MAX(id), 1) FROM restaurant), true);
 
-
--- 4. Menu Categories para o restaurante 1
+-- Categorias de Menu para o restaurante 1
 INSERT INTO menu_category (id, name, restaurant_id, created_at, updated_at) VALUES
 (1, 'Bebidas', 1, NOW(), NOW()),
 (2, 'Sobremesas', 1, NOW(), NOW()),
 (3, 'Lanches', 1, NOW(), NOW()),
 (4, 'Almoço', 1, NOW(), NOW());
 
--- Reinicializa a sequência menu_category_id_seq
 SELECT setval('menu_category_id_seq', (SELECT COALESCE(MAX(id), 1) FROM menu_category), true);
 
-
--- 5. Products para o restaurante 1
+-- Produtos para o restaurante 1
 INSERT INTO product (
   name, description, price, image_url, ingredients, amount, restaurant_id, menu_category_id, created_at, updated_at
 ) VALUES
@@ -220,33 +186,8 @@ INSERT INTO product (
 ('Refrigerante Lata', 'Diversos sabores de refrigerante em lata.', 5.00, 'refrigerante-lata.jpg', ARRAY['Refrigerante'], 1, 1, 1, NOW(), NOW()),
 ('Cerveja Artesanal', 'Seleção de cervejas artesanais locais.', 15.00, 'cerveja-artesanal.jpg', ARRAY['Cerveja'], 1, 1, 1, NOW(), NOW());
 
--- Reinicializa a sequência product_id_seq
 SELECT setval('product_id_seq', (SELECT COALESCE(MAX(id), 1) FROM product), true);
 
-
--- Orders iniciais (associados ao user_id 1 - Admin Inicial)
--- Se precisar de orders para usuários que não são o Admin Inicial,
--- você precisará criar esses usuários via Postman ANTES de inserir essas ordens,
--- ou ajustar o user_id para um ID que você sabe que existirá.
-INSERT INTO orders (name, description, price, user_id, total, status, consumption_method, restaurant_id, created_at, updated_at) VALUES
-('Pedido de Café da Manhã', 'Seleção de itens para o café da manhã', 32.50, 1, 32.50, 'PROCESSING', 'DELIVERY', 1, NOW(), NOW()),
-('Almoço Rápido', 'Lanche e bebida para o almoço', 25.00, 1, 25.00, 'PREPARING', 'PICKUP', 1, NOW(), NOW()),
-('Doces para o Escritório', 'Variedade de sobremesas para a equipe', 55.00, 1, 55.00, 'PENDING', 'DELIVERY', 1, NOW(), NOW());
-
--- Reinicializa a sequência orders_id_seq
-SELECT setval('orders_id_seq', (SELECT COALESCE(MAX(id), 1) FROM orders), true);
-
--- Orders_Product (exemplos, associados às ordens acima)
-INSERT INTO orders_product (name, product_id, order_id, price, quantity, status, created_at, updated_at) VALUES
-('Café Expresso', (SELECT id FROM product WHERE name = 'Café Expresso' LIMIT 1), 1, 4.50, 2, 'PREPARING', NOW(), NOW()),
-('Torta de Limão', (SELECT id FROM product WHERE name = 'Torta de Limão' LIMIT 1), 2, 7.00, 3, 'DELIVERED', NOW(), NOW());
-
--- Reinicializa a sequência orders_product_id_seq
-SELECT setval('orders_product_id_seq', (SELECT COALESCE(MAX(id), 1) FROM orders_product), true);
-
-
--- Commita a transação se tudo deu certo
 COMMIT;
 
--- Reabilita a verificação de chaves estrangeiras
 SET session_replication_role = 'origin';

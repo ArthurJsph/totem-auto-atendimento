@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    networks:
+      - app_network
+
+  backend:
+    build: ./totem
+    restart: always
+    ports:
+      - "${BACKEND_EXPOSED_PORT}:${BACKEND_PORT}"
+    env_file:
+      - ./totem/.env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: db
+      DB_PORT: ${POSTGRES_PORT}
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  frontend:
+    build: ./totem-front
+    restart: always
+    ports:
+      - "${FRONTEND_EXPOSED_PORT}:${FRONTEND_PORT}"
+    environment:
+      VITE_REACT_APP_API_URL: http://localhost:${BACKEND_EXPOSED_PORT}
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

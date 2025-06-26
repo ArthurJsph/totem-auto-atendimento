@@ -1,27 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
-// REMOVIDO: import { getToken, logout } from "../../service/auth"; // Não precisamos mais do getToken/logout diretos aqui
-import { useState, useEffect } from "react"; // useEffect ainda pode ser útil para outras lógicas, mas não para 'loggedIn'
-import { useAuth } from "../../hooks/useAuth"; // Importa o hook de autenticação
-
+import { useState } from "react"; 
+import { useAuth } from "../../hooks/useAuth"; 
+import Logo from "../../assets/logo.png"; // Ajuste o caminho conforme necessário
 export default function Navbar() {
-  // REMOVIDO: const [loggedIn, setLoggedIn] = useState(false); // Substituído por isAuthenticated do useAuth
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  // >>> NOVO: Obtenha isAuthenticated e authorities do hook useAuth
-  const { isAuthenticated, authorities, logout: authLogout } = useAuth(); // Renomeado logout para authLogout para evitar conflito
-
-  // Verifica se o usuário tem a role ADMIN OU MANAGER
+  const { isAuthenticated, authorities, logout: authLogout } = useAuth(); 
   const hasDashboardAccess = authorities.includes("ADMIN") || authorities.includes("MANAGER");
-
-  // REMOVIDO: useEffect para setLoggedIn, pois isAuthenticated já faz isso
-  // useEffect(() => {
-  //   setLoggedIn(!!getToken());
-  // }, []);
-
   function handleLogout() {
-    authLogout(); // Chama a função logout do hook useAuth
-    // Não precisa de setLoggedIn(false) aqui, pois o useAuth já atualiza seu estado
+    authLogout();
     navigate("/login");
   }
 
@@ -34,7 +21,7 @@ export default function Navbar() {
       {/* Logo à esquerda */}
       <div className="flex items-center">
         <img
-          src="src/assets/logo.png"
+          src={Logo}
           alt="2 Tempos Café Logo"
           className="object-cover h-10 w-auto"
         />
@@ -51,7 +38,7 @@ export default function Navbar() {
           </Link>
           {/* MUDANÇA AQUI: Condição para Dashboard */}
           {hasDashboardAccess && (
-            <Link to="/manager" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
+            <Link to="/admin" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
               Dashboard
             </Link>
           )}
@@ -118,7 +105,7 @@ export default function Navbar() {
         </Link>
         {/* MUDANÇA AQUI: Condição para Dashboard no menu mobile */}
         {hasDashboardAccess && (
-          <Link to="/manager" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
+          <Link to="/admin" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
             Dashboard
           </Link>
         )}

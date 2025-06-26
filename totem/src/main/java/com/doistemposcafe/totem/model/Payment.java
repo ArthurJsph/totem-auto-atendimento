@@ -27,6 +27,6 @@ public class Payment {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
-
+    
     // Belongs to a user
 }

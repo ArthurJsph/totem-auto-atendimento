@@ -32,12 +32,12 @@ public class OrderItem {
     private LocalDateTime updated_at;
 
     // Belongs to a product
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private Product product;
 
     // Belongs to an order
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", referencedColumnName = "id")
     private Order order;
 }
