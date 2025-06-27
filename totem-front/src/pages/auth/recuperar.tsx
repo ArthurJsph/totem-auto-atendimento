@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { ForgotPassword } from '../../service/auth'; // Importe a função forgotPassword daqui. Ajuste o caminho se necessário.
+import { ForgotPassword } from '../../service/auth'; 
 
 const Recuperar: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -22,17 +22,10 @@ const Recuperar: React.FC = () => {
         }
       
         try {
-            // Usamos a função forgotPassword importada
             await ForgotPassword(email);
             toast.success(`Email de recuperação enviado para: ${email}. Verifique sua caixa de entrada.`);
-            // O ideal é não redirecionar para /redefinir-senha aqui,
-            // mas sim informar o usuário para verificar o email.
-            // O redirecionamento para /redefinir-senha deve acontecer APENAS
-            // quando o usuário clicar no link do email, que conterá o token.
-            // Por enquanto, vou manter o redirecionamento para fins de demonstração,
-            // mas considere remover ou alterar para uma página de "verifique seu email".
-            navigate('/redefinir-senha'); // Você pode ajustar esta navegação se preferir.
-        } catch (error: any) { // 'any' para capturar erros de Axios mais facilmente.
+            navigate('/redefinir-senha'); 
+        } catch (error: any) { 
             let message = 'Erro ao enviar o email de recuperação.';
             if (error.response?.data?.message) {
                 message = error.response.data.message;

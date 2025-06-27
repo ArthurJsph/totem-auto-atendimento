@@ -8,6 +8,7 @@ import com.doistemposcafe.totem.model.Payment;
 import com.doistemposcafe.totem.repository.OrderRepository;
 import com.doistemposcafe.totem.repository.PaymentRepository;
 import com.doistemposcafe.totem.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +42,7 @@ public class PaymentService {
         return paymentRepository.findById(id).map(paymentMapper::toOutputDTO).orElse(null);
     }
 
+    @Transactional
     public PaymentOutputDTO savePayment(PaymentInputDTO inputDTO) {
         Payment entity = paymentMapper.toEntity(inputDTO);
 
@@ -51,6 +53,7 @@ public class PaymentService {
         return paymentMapper.toOutputDTO(paymentRepository.save(entity));
     }
 
+    @Transactional
     public PaymentOutputDTO updatePayment(PaymentInputDTO inputDTO, Long id) {
         return paymentRepository.findById(id)
                 .map(existing -> {
@@ -69,6 +72,7 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Pagamento não encontrado"));
     }
 
+    @Transactional
     public boolean deletePayment(Long id) {
         if (paymentRepository.existsById(id)) {
             paymentRepository.deleteById(id);

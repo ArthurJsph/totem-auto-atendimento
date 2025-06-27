@@ -38,19 +38,19 @@ public class ProductController {
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<ProductOutputDTO> saveProduct(@RequestBody ProductInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(dto));
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<ProductOutputDTO> updateProduct(@PathVariable Long id, @RequestBody ProductInputDTO dto) {
         return ResponseEntity.ok(productService.updateProduct(dto, id));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         boolean deleted = productService.deleteProduct(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();

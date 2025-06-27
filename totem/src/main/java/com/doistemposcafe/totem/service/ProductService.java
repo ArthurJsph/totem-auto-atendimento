@@ -7,6 +7,7 @@ import com.doistemposcafe.totem.model.Product;
 import com.doistemposcafe.totem.repository.MenuCategoryRepository;
 import com.doistemposcafe.totem.repository.ProductRepository;
 import com.doistemposcafe.totem.repository.RestaurantRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,7 @@ public class ProductService {
         return productRepository.findById(id).map(productMapper::toOutputDTO).orElse(null);
     }
 
+    @Transactional
     public ProductOutputDTO saveProduct(ProductInputDTO inputDTO) {
         Product entity = productMapper.toEntity(inputDTO);
 
@@ -54,6 +56,7 @@ public class ProductService {
         return productMapper.toOutputDTO(productRepository.save(entity));
     }
 
+    @Transactional
     public ProductOutputDTO updateProduct(ProductInputDTO inputDTO, Long id) {
         return productRepository.findById(id)
                 .map(existing -> {
@@ -78,6 +81,7 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
     }
 
+    @Transactional
     public boolean deleteProduct(Long id) {
         if (productRepository.existsById(id)) {
             productRepository.deleteById(id);

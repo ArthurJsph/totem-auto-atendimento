@@ -60,7 +60,7 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="/sobre-nos" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              <a href="/sobre" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
                 Sobre Nós
               </a>
             </li>

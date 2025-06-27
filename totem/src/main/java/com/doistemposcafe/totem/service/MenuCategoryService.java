@@ -7,6 +7,7 @@ import com.doistemposcafe.totem.model.MenuCategory;
 import com.doistemposcafe.totem.repository.MenuCategoryRepository;
 import com.doistemposcafe.totem.repository.RestaurantRepository;
 import jakarta.persistence.Entity;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class MenuCategoryService {
         return menuCategoryRepository.findById(id).map(menuCategoryMapper::toOutputDTO).orElse(null);
     }
 
+    @Transactional
     public MenuCategoryOutputDTO saveCategory(MenuCategoryInputDTO inputDTO) {
         MenuCategory entity = menuCategoryMapper.toEntity(inputDTO);
 
@@ -44,6 +46,7 @@ public class MenuCategoryService {
         return menuCategoryMapper.toOutputDTO(menuCategoryRepository.save(entity));
     }
 
+    @Transactional
     public MenuCategoryOutputDTO updateCategory(MenuCategoryInputDTO inputDTO, Long id) {
         return menuCategoryRepository.findById(id)
                 .map(existing -> {
@@ -59,6 +62,7 @@ public class MenuCategoryService {
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
     }
 
+    @Transactional
     public boolean deleteCategory(Long id) {
         if (menuCategoryRepository.existsById(id)) {
             menuCategoryRepository.deleteById(id);

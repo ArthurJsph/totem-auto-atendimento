@@ -4,7 +4,6 @@ import { Payment } from "./interfaces";
 export async function getAllPayments() {
     try {
         const response = await api.get('/payments/list');
-        console.log('Pagamentos obtidos com sucesso:', response.data);
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar pagamentos:', error);

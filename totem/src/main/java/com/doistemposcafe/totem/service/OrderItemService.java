@@ -7,6 +7,7 @@ import com.doistemposcafe.totem.model.OrderItem;
 import com.doistemposcafe.totem.repository.OrderItemRepository;
 import com.doistemposcafe.totem.repository.OrderRepository;
 import com.doistemposcafe.totem.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ public class OrderItemService {
         return orderItemRepository.findById(id).map(orderItemMapper::toOutputDTO).orElse(null);
     }
 
+    @Transactional
     public OrderItemOutputDTO saveItem(OrderItemInputDTO inputDTO) {
         OrderItem entity = orderItemMapper.toEntity(inputDTO);
 
@@ -54,6 +56,7 @@ public class OrderItemService {
         return orderItemMapper.toOutputDTO(orderItemRepository.save(entity));
     }
 
+    @Transactional
     public OrderItemOutputDTO updateItem(OrderItemInputDTO inputDTO, Long id) {
         return orderItemRepository.findById(id)
                 .map(existing -> {
@@ -76,6 +79,7 @@ public class OrderItemService {
                 .orElseThrow(() -> new RuntimeException("Item do pedido não encontrado"));
     }
 
+    @Transactional
     public boolean deleteItem(Long id) {
         if (orderItemRepository.existsById(id)) {
             orderItemRepository.deleteById(id);

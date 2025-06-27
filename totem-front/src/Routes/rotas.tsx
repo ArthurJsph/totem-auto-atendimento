@@ -21,7 +21,7 @@ import TermosDeUso from '../pages/public/termosDeUso';
 import Blog from '../pages/public/blog';
 import RedefinirSenha from '../pages/auth/RedefinirSenha';
 import { useAuth } from '../hooks/useAuth'; // Mantemos o useAuth, pois ele é útil para outras rotas
-
+import MyAccount from '../pages/private/myAccout';
 const Rotas = () => {
   const { isLoading, isAuthenticated, authorities } = useAuth(); // Mantemos para outras lógicas de rota
 
@@ -86,6 +86,14 @@ const Rotas = () => {
               <Route path="/admin" element={<Admin />} />
             </Route>
           </Route>
+
+          <Route element={<Layout />}>
+          <Route element={<PrivateRoute allowedRoles={["ADMIN", "MANAGER", "USER"]} />}>
+            <Route path="/my-account" element={<MyAccount />} />
+          </Route>
+          </Route>
+
+
 
           {/* Rotas Especiais/Erro */}
           <Route path="/redirect" element={<RedirectByRole />} />

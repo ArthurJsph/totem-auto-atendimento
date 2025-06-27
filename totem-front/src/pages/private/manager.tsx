@@ -1,103 +1,49 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-
+import React, { useState, useMemo } from 'react'; // Removido useEffect e useCallback, agora no hook
 import { useAuth } from '../../hooks/useAuth';
-import { Product } from '../../service/interfaces';
-import {
-    getAllProducts,
-    saveProduct,
-    updateProduct,
-    deleteProduct
-} from '../../service/product';
+import { Product } from '../../service/interfaces'; // Importe Product
+import { useAdmin } from '../../hooks/useAdmin'; // Importe o useAdmin hook
+
+// Importe o modal de produto específico para o gerente
+import ProductModalForManager from '../../modals/ProductModalForManager'; // Ajuste o caminho se necessário
 
 const ManagerDashboard: React.FC = () => {
     const { authorities } = useAuth();
+    const {
+        data, // Contém todos os dados (products, orders, etc.)
+        loadingError, // Contém o estado de loading e erro para cada tipo
+        handleAddEditProduct, // Funções CRUD para produtos do hook
+        handleDeleteProduct
+    } = useAdmin(); // Use o hook useAdmin
 
-
-    const [products, setProducts] = useState<Product[]>([]);
+    // Estados para controle do modal
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
-    const [productLoading, setProductLoading] = useState(false);
-    const [productError, setProductError] = useState<string | null>(null);
-
-    // --- Estados para o Filtro ---
+    // --- Estados para o Filtro (permanecem aqui, pois são específicos da UI do dashboard) ---
     const [filterName, setFilterName] = useState('');
     const [filterMinPrice, setFilterMinPrice] = useState('');
     const [filterMaxPrice, setFilterMaxPrice] = useState('');
 
     const hasManagerAccess = authorities.includes('MANAGER') || authorities.includes('ADMIN');
 
-    const getErrorMessage = useCallback((error: unknown): string => {
-        if (error instanceof Error) {
-            return error.message;
-        }
-        if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
-            return error.message;
-        }
-        return 'Ocorreu um erro desconhecido.';
-    }, []);
-
-    // --- Funções de Fetch e CRUD para Produtos (otimizadas com useCallback) ---
-    const fetchProducts = useCallback(async () => {
-        setProductLoading(true);
-        setProductError(null);
+    // Funções de submit para o modal de produto, que chamam as do hook
+    const handleSubmitProduct = async (productData: Product) => {
         try {
-            const data = await getAllProducts();
-            setProducts(data);
-        } catch (err: unknown) {
-            console.error("Falha ao buscar produtos:", err);
-            setProductError(`Não foi possível carregar os produtos: ${getErrorMessage(err)}`);
-        } finally {
-            setProductLoading(false);
-        }
-    }, [getErrorMessage]);
-
-    const handleAddEditProduct = useCallback(async (productData: Product) => {
-        setProductLoading(true);
-        setProductError(null);
-        try {
-            if (productData.id) {
-                await updateProduct(productData);
-            } else {
-                const productToSave = { ...productData };
-                await saveProduct(productToSave as Omit<Product, 'id'>);
-            }
+            await handleAddEditProduct(productData);
             setIsProductModalOpen(false);
             setSelectedProduct(null);
-            fetchProducts();
-        } catch (err: unknown) {
-            console.error("Erro ao salvar produto:", err);
-            setProductError(`Erro ao salvar produto: ${getErrorMessage(err)}`);
-        } finally {
-            setProductLoading(false);
+        } catch (err) {
+            // O erro já é tratado e setado dentro do hook, o modal o exibirá
+            console.error("Erro ao salvar produto no ManagerDashboard:", err);
         }
-    }, [fetchProducts, getErrorMessage]);
+    };
 
-    const handleDeleteProduct = useCallback(async (productId: string | number) => {
-        if (window.confirm("Tem certeza que deseja excluir este produto?")) {
-            setProductLoading(true);
-            setProductError(null);
-            try {
-                await deleteProduct(productId);
-                fetchProducts();
-            } catch (err: unknown) {
-                console.error("Erro ao excluir produto:", err);
-                setProductError(`Erro ao excluir produto: ${getErrorMessage(err)}`);
-            } finally {
-                setProductLoading(false);
-            }
-        }
-    }, [fetchProducts, getErrorMessage]);
-
-    useEffect(() => {
-        if (hasManagerAccess) {
-            fetchProducts();
-        }
-    }, [hasManagerAccess, fetchProducts]);
-
-    // --- Lógica de Filtragem (useMemo para otimização) ---
+    // Lógica de filtragem otimizada com useMemo
     const filteredProducts = useMemo(() => {
-        return products.filter(product => {
+        if (!hasManagerAccess) {
+            return []; // Retorna vazio se não tiver acesso
+        }
+        return data.products.filter(product => { // Usa data.products do hook
             const matchesName = product.name?.toLowerCase().includes(filterName.toLowerCase()) ||
                                 product.description?.toLowerCase().includes(filterName.toLowerCase());
 
@@ -110,136 +56,16 @@ const ManagerDashboard: React.FC = () => {
 
             return matchesName && matchesMinPrice && matchesMaxPrice;
         });
-    }, [products, filterName, filterMinPrice, filterMaxPrice]);
+    }, [data.products, filterName, filterMinPrice, filterMaxPrice, hasManagerAccess]); // Adicionado hasManagerAccess como dependência
 
-    // --- Componentes Modais Internos ---
-    interface ProductModalProps {
-        isOpen: boolean;
-        onClose: () => void;
-        onSubmit: (product: Product) => void;
-        product: Product | null;
-        isLoading: boolean;
-        error: string | null;
-    }
-
-    const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSubmit, product, isLoading, error }) => {
-        const [name, setName] = useState(product?.name || '');
-        const [description, setDescription] = useState(product?.description || '');
-        const [price, setPrice] = useState(product?.price?.toString() || '');
-        const [imageUrl, setImageUrl] = useState(product?.imageUrl || ''); // Mantém a URL da imagem
-
-        useEffect(() => {
-            if (product) {
-                setName(product.name || '');
-                setDescription(product.description || '');
-                setPrice(product.price?.toString() || '');
-                setImageUrl(product.imageUrl || '');
-            } else {
-                setName('');
-                setDescription('');
-                setPrice('');
-                setImageUrl('');
-            }
-        }, [product, isOpen]);
-
-        const handleSubmit = (e: React.FormEvent) => {
-            e.preventDefault();
-
-            // Validação básica
-            if (!name.trim()) {
-                alert('O nome do produto é obrigatório.');
-                return;
-            }
-            if (parseFloat(price) <= 0 || isNaN(parseFloat(price))) {
-                alert('O preço deve ser um número positivo.');
-                return;
-            }
-
-            const productData: Product = {
-                id: product?.id,
-                name: name.trim(),
-                description: description.trim(),
-                price: parseFloat(price),
-                imageUrl: imageUrl.trim() || undefined
-            };
-            onSubmit(productData);
-        };
-
-        if (!isOpen) return null;
-
+    // Condição para renderizar o dashboard (opcional, mas boa prática)
+    if (!hasManagerAccess) {
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">{product ? 'Editar Produto' : 'Adicionar Novo Produto'}</h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Nome do Produto:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Descrição:</label>
-                            <textarea
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300 h-24"
-                                required
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label htmlFor="price" className="block text-gray-700 text-sm font-bold mb-2">Preço:</label>
-                            <input
-                                type="number"
-                                id="price"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                                step="0.01"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="imageUrl" className="block text-gray-700 text-sm font-bold mb-2">URL da Imagem:</label>
-                            <input
-                                type="url"
-                                id="imageUrl"
-                                value={imageUrl}
-                                onChange={(e) => setImageUrl(e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-50 border-gray-300"
-                            />
-                            {/* Pré-visualização da imagem removida aqui */}
-                        </div>
-                        <div className="flex justify-end gap-4 mt-6">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
-                                disabled={isLoading}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? 'Salvando...' : (product ? 'Salvar Alterações' : 'Adicionar Produto')}
-                            </button>
-                        </div>
-                    </form>
-                    {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
-                </div>
+            <div className="min-h-screen bg-gray-100 p-6 md:p-10 flex items-center justify-center">
+                <p className="text-xl text-red-600 font-semibold">Acesso Negado: Você não tem permissão para acessar este painel.</p>
             </div>
         );
-    };
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 md:p-10">
@@ -302,17 +128,16 @@ const ManagerDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {productLoading && <p className="text-center text-blue-600 text-lg">Carregando produtos...</p>}
-                {productError && <p className="text-red-500 text-center text-lg">{productError}</p>}
+                {loadingError.product.loading && <p className="text-center text-blue-600 text-lg">Carregando produtos...</p>}
+                {loadingError.product.error && <p className="text-red-500 text-center text-lg">{loadingError.product.error}</p>}
 
-                {!productLoading && !productError && (
+                {!loadingError.product.loading && !loadingError.product.error && (
                     filteredProducts.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                                 <thead className="bg-gray-200 text-gray-700">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">ID</th>
-                                        {/* Coluna de Imagem REMOVIDA AQUI */}
                                         <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Nome</th>
                                         <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Descrição</th>
                                         <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Preço</th>
@@ -323,7 +148,6 @@ const ManagerDashboard: React.FC = () => {
                                     {filteredProducts.map((product) => (
                                         <tr key={product.id}>
                                             <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">{product.id}</td>
-                                            {/* Célula de Imagem REMOVIDA AQUI */}
                                             <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 font-medium">{product.name}</td>
                                             <td className="px-4 py-2 text-sm text-gray-600 max-w-xs overflow-hidden text-ellipsis">{product.description}</td>
                                             <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">R$ {(product.price ?? 0).toFixed(2)}</td>
@@ -352,14 +176,14 @@ const ManagerDashboard: React.FC = () => {
                 )}
             </div>
 
-            {/* Modal de Produto */}
-            <ProductModal
+            {/* Modal de Produto para Gerente */}
+            <ProductModalForManager
                 isOpen={isProductModalOpen}
-                onClose={() => { setIsProductModalOpen(false); setProductError(null); }}
-                onSubmit={handleAddEditProduct}
+                onClose={() => { setIsProductModalOpen(false); }} // O erro é tratado no hook
+                onSubmit={handleSubmitProduct}
                 product={selectedProduct}
-                isLoading={productLoading}
-                error={productError}
+                isLoading={loadingError.product.loading}
+                error={loadingError.product.error}
             />
         </div>
     );

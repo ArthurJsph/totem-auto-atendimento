@@ -39,21 +39,18 @@ public class OrderController {
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderOutputDTO> saveOrder(@RequestBody OrderInputDTO inputDTO) {
         OrderOutputDTO saved = orderService.saveOrder(inputDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderOutputDTO> updateOrder(@PathVariable Long id, @RequestBody OrderInputDTO inputDTO) {
         OrderOutputDTO updated = orderService.updateOrder(inputDTO, id);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         boolean deleted = orderService.deleteOrder(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();

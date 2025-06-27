@@ -1,34 +1,68 @@
-// src/service/auth.ts
 import { api } from "./api";
-import { User } from "./interfaces"; // Verifique se essa interface User existe e está correta
+import { User } from "./interfaces";
 import { jwtDecode } from 'jwt-decode';
+
+type LoginResponse = {
+    token: string;
+    userOutputDTO: User; 
+};
 
 type JwtPayload = {
     sub: string;
-    authorities: string[]; 
-    exp: number; 
-    iat: number; 
+    authorities: string[];
+    exp: number;
+    iat: number;
 };
 
-type UserAuthority = 'ADMIN' | 'MANAGER' | 'CLIENT' | string;
+type UserAuthority = 'ADMIN' | 'MANAGER' | 'CLIENT' | string; 
 
-
-export async function login(email: string, password: string): Promise<{ token: string }> { // Retorna um objeto com 'token'
+export async function login(email: string, password: string): Promise<{ token: string; user: User }> {
     try {
-        const response = await api.post("/auth/login", { email, password });
-        const token = response.data.token;
+        const response = await api.post<LoginResponse>("/auth/login", { email, password });
+        const { token, userOutputDTO } = response.data; 
 
         if (token) {
             localStorage.setItem("token", token);
         }
-        return { token }; 
+        if (userOutputDTO) {
+            localStorage.setItem("user", JSON.stringify(userOutputDTO));
+        }
+
+        return { token, user: userOutputDTO }; 
     } catch (error) {
         console.error("Erro ao logar:", error);
         throw error;
     }
 }
 
-export async function register(data: User): Promise<User> {
+export function getLoggedUser(): User | null {
+    const userJson = localStorage.getItem("user");
+    if (!userJson) return null;
+    try {
+        return JSON.parse(userJson);
+    } catch (e) {
+        console.error("Erro ao parsear dados do usuário do localStorage:", e);
+        localStorage.removeItem("user");
+        return null;
+    }
+}
+
+export async function logout(): Promise<void> {
+    try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user"); 
+        if (api.defaults.headers.common["Authorization"]) {
+            delete api.defaults.headers.common["Authorization"];
+        }
+    } catch (error) {
+        console.error("Erro ao deslogar:", error);
+        throw error;
+    }
+}
+
+
+
+export async function register(data: User): Promise<User> { 
     try {
         const response = await api.post<User>("/users/save", data);
         return response.data;
@@ -52,6 +86,7 @@ export function getUserRoles(): UserAuthority[] {
     } catch (e) {
         console.error("Erro ao decodificar JWT para roles:", e);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         return [];
     }
 }
@@ -61,7 +96,7 @@ export function getMainRole(): "ADMIN" | "MANAGER" | "CLIENT" | null {
 
     if (roles.includes("ADMIN")) return "ADMIN";
     if (roles.includes("MANAGER")) return "MANAGER";
-    if (roles.includes("CLIENT")) return "CLIENT";
+    if (roles.includes("USER")) return "CLIENT"; 
     return null;
 }
 
@@ -76,6 +111,7 @@ export function isTokenExpired(): boolean {
     } catch (e) {
         console.error("Erro ao verificar expiração do token:", e);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         return true;
     }
 }
@@ -87,19 +123,8 @@ export function isUserAdminOrManager(): boolean {
 
 export function isAuthenticated(): boolean {
     const token = getToken();
-    return !!token && !isTokenExpired();
-}
-
-export async function logout(): Promise<void> {
-    try {
-        localStorage.removeItem("token");
-        if (api.defaults.headers.common["Authorization"]) {
-            delete api.defaults.headers.common["Authorization"];
-        }
-    } catch (error) {
-        console.error("Erro ao deslogar:", error);
-        throw error;
-    }
+    const user = getLoggedUser();
+    return !!token && !!user && !isTokenExpired();
 }
 
 export async function ForgotPassword(email: string): Promise<void> {
@@ -114,11 +139,12 @@ export async function ForgotPassword(email: string): Promise<void> {
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  try {
-    await api.post("/users/reset-password", { token, newPassword });
-    console.log("Senha redefinida com sucesso!");
-  } catch (error) {
-    console.error("Erro ao redefinir senha:", error);
-    throw error; 
-  }
+    try {
+        await api.post("/users/reset-password", { token, newPassword });
+        console.log("Senha redefinida com sucesso!");
+    } catch (error) {
+        console.error("Erro ao redefinir senha:", error);
+        throw error;
+    }
 }
+

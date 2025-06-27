@@ -84,20 +84,18 @@ function Login() {
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       <div className="hidden md:flex w-0 md:w-2/3 h-screen bg-cover bg-center" style={{ backgroundImage: `url('${ImgLogin}')` }}>
-        {/* Adiciona um overlay sutil para melhorar o contraste com o formulário */}
         <div className="w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
-            {/* Opcional: Adicionar um texto ou logo sobre a imagem */}
             <h1 className="text-white text-4xl font-bold drop-shadow-lg"></h1>
         </div>
       </div>
-      <div className="w-full md:w-1/3 h-screen flex flex-col bg-white justify-center items-center p-8 overflow-y-auto"> {/* Adicionado overflow-y-auto para evitar cortar em telas pequenas */}
-        <div className="bg-white p-8 rounded-lg shadow-2xl text-center w-full max-w-sm"> {/* Sombra mais forte para destaque */}
-          <h2 className="text-gray-800 text-3xl font-bold mb-8">Bem-vindo(a)!</h2> {/* Título mais convidativo */}
+      <div className="w-full md:w-1/3 h-screen flex flex-col bg-white justify-center items-center p-8 overflow-y-auto"> 
+        <div className="bg-white p-8 rounded-lg shadow-2xl text-center w-full max-w-sm"> 
+          <h2 className="text-gray-800 text-3xl font-bold mb-8">Bem-vindo(a)!</h2> 
           <p className="text-gray-600 mb-6">Faça login para continuar.</p>
 
           <form className="space-y-6" onSubmit={handleSubmit}> 
             <div className="relative">
-              <label htmlFor="email" className="sr-only">E-mail</label> {/* Label para acessibilidade */}
+              <label htmlFor="email" className="sr-only">E-mail</label> 
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <UserIcon /> 
               </span>
@@ -115,9 +113,9 @@ function Login() {
             </div>
 
             <div className="relative">
-              <label htmlFor="password" className="sr-only">Senha</label> {/* Label para acessibilidade */}
+              <label htmlFor="password" className="sr-only">Senha</label> 
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <LockIcon /> {/* Usando o ícone SVG */}
+                <LockIcon />
               </span>
               <input
                 type={showPassword ? "text" : "password"}
@@ -136,7 +134,7 @@ function Login() {
                 className="absolute inset-y-0 right-0 flex items-center pr-3 focus:outline-none text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
               >
-                {showPassword ? <EyeSlashIcon /> : <EyeIcon />} {/* Usando os ícones SVG */}
+                {showPassword ? <EyeSlashIcon /> : <EyeIcon />} 
               </button>
             </div>
 
@@ -146,7 +144,7 @@ function Login() {
                     type="checkbox"
                     id="lembrar"
                     name="lembrar"
-                    className="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" // Estilizado o checkbox
+                    className="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" 
                     checked={lembrar}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLembrar(e.target.checked)}
                     />
@@ -163,7 +161,7 @@ function Login() {
             </div>
 
             {error && (
-              <p className="text-red-600 text-sm mt-2">{error}</p> // Cor do erro mais forte e mt-2
+              <p className="text-red-600 text-sm mt-2">{error}</p> 
             )}
 
             <button
@@ -186,7 +184,7 @@ function Login() {
 
             <Link
               to="/registrar"
-              className="block mt-6 text-sm text-red-700 hover:underline font-medium transition-colors" // Cor primária para link de registro
+              className="block mt-6 text-sm text-red-700 hover:underline font-medium transition-colors" 
             >
               Não tem uma conta? Crie uma aqui →
             </Link>

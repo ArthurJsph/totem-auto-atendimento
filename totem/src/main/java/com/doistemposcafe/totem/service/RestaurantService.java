@@ -6,6 +6,7 @@ import com.doistemposcafe.totem.dto.mapper.RestaurantMapper;
 import com.doistemposcafe.totem.model.Restaurant;
 import com.doistemposcafe.totem.repository.ManagerRepository;
 import com.doistemposcafe.totem.repository.RestaurantRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,11 +36,13 @@ public class RestaurantService {
                 .orElse(null);
     }
 
+    @Transactional
     public RestaurantOutputDTO saveRestaurant(RestaurantInputDTO inputDTO) {
         Restaurant entity = restaurantMapper.toEntity(inputDTO);
         return restaurantMapper.toOutputDTO(restaurantRepository.save(entity));
     }
 
+    @Transactional
     public RestaurantOutputDTO updateRestaurant(RestaurantInputDTO inputDTO, Long id) {
         return restaurantRepository.findById(id)
                 .map(existing -> {
@@ -61,6 +64,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Restaurante não encontrado"));
     }
 
+    @Transactional
     public boolean deleteRestaurant(Long id) {
         if (restaurantRepository.existsById(id)) {
             restaurantRepository.deleteById(id);

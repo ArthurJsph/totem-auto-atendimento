@@ -26,7 +26,6 @@ const Registrar = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Imagem ocupa toda a esquerda */}
       <section className="hidden md:block w-1/2 h-full">
         <img
           alt="Imagem de restaurante moderno com ambiente acolhedor"
@@ -35,9 +34,7 @@ const Registrar = () => {
         />
       </section>
 
-      {/* Formulário ocupa toda a direita, centralizado verticalmente */}
-      <section className="w-full md:w-1/2 h-full flex flex-col justify-center items-center bg-white p-4 sm:p-6 lg:p-8"> {/* Added more padding for larger screens */}
-        {/* Adjusted max-width values and added mx-auto for centering */}
+      <section className="w-full md:w-1/2 h-full flex flex-col justify-center items-center bg-white p-4 sm:p-6 lg:p-8"> 
         <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl mx-auto overflow-y-auto max-h-full">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center md:text-left">
             Registro de Usuário
@@ -45,8 +42,7 @@ const Registrar = () => {
           <form
             onSubmit={handleSubmit}
             autoComplete="off"
-            // Changed md:grid-cols-2 to sm:grid-cols-2 to activate two columns earlier
-            className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3" // Increased horizontal gap, slightly reduced vertical
+            className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3" 
             noValidate
           >
             <div>
@@ -147,7 +143,6 @@ const Registrar = () => {
               />
             </div>
 
-            {/* Changed col-span to sm:col-span-2 to match the grid breakpoint */}
             {error && (
               <p className="sm:col-span-2 text-red-600 text-sm mt-2">{error}</p>
             )}

@@ -39,7 +39,6 @@ public class PaymentController {
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<PaymentOutputDTO> savePayment(@RequestBody PaymentInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.savePayment(dto));
     }
@@ -51,7 +50,7 @@ public class PaymentController {
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
         boolean deleted = paymentService.deletePayment(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();

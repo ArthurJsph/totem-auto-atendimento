@@ -9,7 +9,6 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ allowedRoles }) => {
-  // <<<<<<< AQUI ESTÁ A MUDANÇA: Use o 'useAuth' que você criou!
   const { isAuthenticated, authorities, isLoading } = useAuth(); 
 
   if (isLoading) {
@@ -20,7 +19,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar se o usuário tem *pelo menos uma* das roles permitidas
   const hasPermission = allowedRoles.some(role => authorities.includes(role));
 
   if (allowedRoles && !hasPermission) {

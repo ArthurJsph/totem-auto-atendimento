@@ -27,13 +27,13 @@ public class ManagerController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ManagerOutputDTO>> getAllManagers() {
         return ResponseEntity.ok(managerService.getAllManagers());
     }
 
     @GetMapping("/list/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ManagerOutputDTO> getManagerById(@PathVariable Long id) {
         ManagerOutputDTO manager = managerService.getManagerById(id);
         return manager != null ? ResponseEntity.ok(manager) : ResponseEntity.notFound().build();
@@ -46,7 +46,7 @@ public class ManagerController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ManagerOutputDTO> updateManager(@PathVariable Long id, @RequestBody ManagerInputDTO dto) {
         return ResponseEntity.ok(managerService.updateManager(dto, id));
     }

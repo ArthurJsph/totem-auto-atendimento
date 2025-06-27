@@ -6,6 +6,7 @@ import com.doistemposcafe.totem.dto.mapper.ManagerMapper;
 import com.doistemposcafe.totem.model.Manager;
 import com.doistemposcafe.totem.model.Role;
 import com.doistemposcafe.totem.repository.ManagerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ public class ManagerService {
         return managerRepository.findById(id).map(managerMapper::toOutputDTO).orElse(null);
     }
 
+    @Transactional
     public ManagerOutputDTO saveManager(ManagerInputDTO inputDTO) {
         Manager entity = managerMapper.toEntity(inputDTO);
         entity.setPassword(passwordEncoder.encode(inputDTO.password()));
@@ -47,6 +49,7 @@ public class ManagerService {
     }
 
 
+    @Transactional
     public ManagerOutputDTO updateManager(ManagerInputDTO inputDTO, Long id) {
         return managerRepository.findById(id)
                 .map(existing -> {
@@ -60,6 +63,7 @@ public class ManagerService {
                 .orElseThrow(() -> new RuntimeException("Gerente não encontrado"));
     }
 
+    @Transactional
     public boolean deleteManager(Long id) {
         if (managerRepository.existsById(id)) {
             managerRepository.deleteById(id);

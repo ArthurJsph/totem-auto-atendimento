@@ -9,6 +9,7 @@ import com.doistemposcafe.totem.model.User;
 import com.doistemposcafe.totem.repository.PasswordResetTokenRepository;
 import com.doistemposcafe.totem.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -123,6 +124,23 @@ public class UserService {
         emailService.sendSimpleMail(recipientAddress, subject, message);
 
         return token;
+    }
+
+    @Transactional
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Senha atual incorreta.");
+        }
+
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
 

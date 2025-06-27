@@ -11,9 +11,8 @@ const RedefinirSenha: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Extrai o token da URL quando o componente é montado
+    
     useEffect(() => {
-        // Exemplo: se o link for /redefinir-senha?token=SEU_TOKEN_AQUI
         const params = new URLSearchParams(location.search);
         const urlToken = params.get('token');
         if (urlToken) {
@@ -30,7 +29,7 @@ const RedefinirSenha: React.FC = () => {
             return;
         }
 
-        if (!newPassword || newPassword.length < 6) { // Exemplo de validação de senha
+        if (!newPassword || newPassword.length < 6) { 
             toast.error('A nova senha deve ter no mínimo 6 caracteres.');
             return;
         }
@@ -45,12 +44,16 @@ const RedefinirSenha: React.FC = () => {
             await resetPassword(token, newPassword);
             toast.success('Sua senha foi redefinida com sucesso! Você já pode fazer login.');
             navigate('/login'); // Redireciona para a página de login após o sucesso
-        } catch (error: any) {
-            let message = 'Erro ao redefinir sua senha.';
-            if (error.response?.data?.message) {
-                message = error.response.data.message;
-            } else if (error.message) {
-                message = error.message;
+        } catch (error: unknown) {
+            let message = 'Ocorreu um erro ao redefinir a senha. Por favor, tente novamente.';
+            if (error && typeof error === 'object' && 'response' in error && 'response' in (error as any)) {
+                const errorResponse = (error as any).response;
+                if (errorResponse && typeof errorResponse === 'object' && 'data' in errorResponse && 'data' in errorResponse) {
+                    const errorData = errorResponse.data;
+                    if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+                        message = errorData.message;
+                    }
+                }
             }
             toast.error(message);
         }
@@ -78,7 +81,7 @@ const RedefinirSenha: React.FC = () => {
                             className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
                                 triedSubmit && !token ? 'border-red-500' : ''
                             }`}
-                            readOnly={!!token} // Torna o campo somente leitura se o token já foi preenchido pela URL
+                            readOnly={!!token} 
                         />
                         {triedSubmit && !token && (
                             <p className="text-red-500 text-xs italic mt-1">Por favor, informe o token.</p>

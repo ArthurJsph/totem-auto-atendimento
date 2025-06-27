@@ -2,11 +2,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react"; 
 import { useAuth } from "../../hooks/useAuth"; 
 import Logo from "../../assets/logo.png"; // Ajuste o caminho conforme necessário
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, authorities, logout: authLogout } = useAuth(); 
+  // Use 'user' do useAuth para verificar se o usuário está logado e, se necessário, pegar o ID ou outras infos
+  const { isAuthenticated, authorities, logout: authLogout, user } = useAuth(); // Adicione 'user' aqui
+  
   const hasDashboardAccess = authorities.includes("ADMIN") || authorities.includes("MANAGER");
+
   function handleLogout() {
     authLogout();
     navigate("/login");
@@ -36,10 +40,16 @@ export default function Navbar() {
           <Link to="/pedido" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
             Pedidos
           </Link>
-          {/* MUDANÇA AQUI: Condição para Dashboard */}
+          {/* Dashboard apenas para ADMIN/MANAGER */}
           {hasDashboardAccess && (
             <Link to="/admin" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
               Dashboard
+            </Link>
+          )}
+          {/* Minha Conta APENAS para usuários autenticados */}
+          {isAuthenticated && ( // Condição para exibir "Minha Conta"
+            <Link to="/my-account" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
+              Minha Conta
             </Link>
           )}
           <Link to="/sobre" className="transition-shadow hover:shadow-[0_2px_0_0_#ef4444]">
@@ -50,7 +60,7 @@ export default function Navbar() {
 
       {/* Botões de Login/Sair para telas maiores (desktop) */}
       <div className="hidden md:flex justify-end items-center space-x-4 ml-auto">
-        {!isAuthenticated ? ( // Use isAuthenticated do useAuth
+        {!isAuthenticated ? (
           <>
             <Link to="/login" className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition">
               Entrar
@@ -60,16 +70,24 @@ export default function Navbar() {
             </Link>
           </>
         ) : (
-          <button onClick={handleLogout} className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition">
-            Sair
-          </button>
+          // Exibe o nome do usuário ou um link para a conta, e o botão Sair
+          <div className="flex items-center space-x-4">
+            {user && ( // Verifica se 'user' existe para exibir o nome
+              <Link to="/my-account" className="text-gray-700 font-medium hover:text-red-700">
+                Olá, {user.name.split(' ')[0]}! {/* Exibe apenas o primeiro nome */}
+              </Link>
+            )}
+            <button onClick={handleLogout} className="bg-red-700 text-white px-4 py-2 rounded shadow hover:bg-red-800 transition">
+              Sair
+            </button>
+          </div>
         )}
       </div>
 
       {/* Ícone de Hambúrguer (visível apenas em telas menores) */}
       <div className="md:hidden flex items-center">
         {/* Botões de Login/Sair ao lado do hambúrguer em mobile */}
-        {!isAuthenticated ? ( // Use isAuthenticated do useAuth
+        {!isAuthenticated ? (
           <Link to="/login" className="bg-red-700 text-white px-3 py-1.5 text-sm rounded shadow hover:bg-red-800 transition mr-2">
             Entrar
           </Link>
@@ -103,17 +121,23 @@ export default function Navbar() {
         <Link to="/pedido" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
           Pedidos
         </Link>
-        {/* MUDANÇA AQUI: Condição para Dashboard no menu mobile */}
+        {/* Dashboard no menu mobile */}
         {hasDashboardAccess && (
           <Link to="/admin" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
             Dashboard
+          </Link>
+        )}
+        {/* Minha Conta no menu mobile */}
+        {isAuthenticated && (
+          <Link to="/my-account" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
+            Minha Conta
           </Link>
         )}
         <Link to="/sobre" className="text-gray-700 font-medium hover:text-red-700" onClick={toggleMenu}>
           Sobre
         </Link>
 
-        {!isAuthenticated && ( // Use isAuthenticated do useAuth
+        {!isAuthenticated && (
           <>
             <div className="pt-4 border-t border-gray-200">
               <Link to="/registrar" className="block text-red-700 border border-red-700 px-4 py-2 rounded text-center hover:bg-red-50 transition" onClick={toggleMenu}>

@@ -32,12 +32,12 @@ export async function saveUser(user: User): Promise<User> {
     }
 }
 
-export async function updateUser(user: User): Promise<User> {
+export async function updateUser(userData: Partial<User>, userId: number): Promise<User> {
     try {
-        const response = await api.put(`/users/update/${user.id}`, user);
+        const response = await api.put<User>(`/users/update/${userId}`, userData);
         return response.data;
     } catch (error) {
-        console.error(`Erro ao atualizar usuário com id ${user.id}:`, error);
+        console.error("Erro ao atualizar dados do usuário:", error);
         throw error;
     }
 }
@@ -47,6 +47,16 @@ export async function deleteUser(id: string | number): Promise<void> {
         await api.delete(`/users/delete/${id}`);
     } catch (error) {
         console.error(`Erro ao deletar usuário com id ${id}:`, error);
+        throw error;
+    }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    try {
+        await api.post('/users/change-password', { currentPassword, newPassword });
+        console.log('Senha alterada com sucesso via changePassword!');
+    } catch (error) {
+        console.error('Erro ao alterar senha:', error);
         throw error;
     }
 }

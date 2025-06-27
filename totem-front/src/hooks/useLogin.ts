@@ -1,7 +1,7 @@
 // src/hooks/useLogin.ts ou onde seu useLogin estiver
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./useAuth"; // Importa o hook de autenticação que você criou
+import { useAuth } from "./useAuth"; 
 
 interface UseLoginReturn {
     email: string;
@@ -19,7 +19,6 @@ interface UseLoginReturn {
 
 export function useLogin(): UseLoginReturn {
     const navigate = useNavigate();
-    // Pega as autoridades do useAuth para decidir o redirecionamento
     const { login, isLoading, isAuthenticated, authorities } = useAuth(); 
 
     const [email, setEmail] = useState<string>("");
@@ -28,7 +27,6 @@ export function useLogin(): UseLoginReturn {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
 
-    // Função auxiliar para determinar a rota de redirecionamento
     const getDashboardPath = useCallback((userAuthorities: string[]): string => {
         if (userAuthorities.includes('ADMIN')) {
             return "/admin";
@@ -36,19 +34,17 @@ export function useLogin(): UseLoginReturn {
         if (userAuthorities.includes('MANAGER')) {
             return "/manager";
         }
-        // Se for CLIENT ou qualquer outro role padrão, redireciona para a home
-        return "/"; // Página inicial para clientes/usuários comuns
+        return "/"; 
     }, []);
 
     useEffect(() => {
-        // Redireciona se já estiver autenticado
         if (isAuthenticated) {
-            const path = getDashboardPath(authorities); // Usa a função auxiliar
+            const path = getDashboardPath(authorities);
             navigate(path);
             return;
         }
 
-        // Lógica para esconder o overflow do body
+        
         const originalOverflow = document.body.style.overflow;
         const originalHeight = document.body.style.height;
         document.body.style.overflow = "hidden";
@@ -58,11 +54,11 @@ export function useLogin(): UseLoginReturn {
             document.body.style.overflow = originalOverflow;
             document.body.style.height = originalHeight;
         };
-    }, [isAuthenticated, navigate, authorities, getDashboardPath]); // Adicione 'authorities' e 'getDashboardPath' às dependências
+    }, [isAuthenticated, navigate, authorities, getDashboardPath]); 
 
     const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError(""); // Limpa erros anteriores
+        setError(""); 
 
         try {
             if (!email || !senha) {
@@ -78,15 +74,11 @@ export function useLogin(): UseLoginReturn {
                 } else {
                     localStorage.removeItem("rememberedEmail");
                 }
-                
-                // Redireciona dinamicamente APÓS o login bem-sucedido
-                // As autoridades já devem ter sido atualizadas pelo `login` do `useAuth`
-                const path = getDashboardPath(authorities); // Usa as autoridades atualizadas
+
+                const path = getDashboardPath(authorities); 
                 navigate(path); 
             } 
-            // Se o login falhou, o erro já é tratado no catch ou pelo `result.message`
-            // Não precisamos de um `else` aqui para `result.success` porque `login` deve lançar erro
-            // ou retornar `success: false` com `message`
+
         } catch (err: unknown) {
             interface ErrorResponse {
                 response?: {
@@ -112,7 +104,7 @@ export function useLogin(): UseLoginReturn {
             setError(errorMessage);
             console.error("Erro de login (useLogin):", err);
         }
-    }, [email, senha, lembrar, login, navigate, authorities, getDashboardPath]); // Adicione 'authorities' e 'getDashboardPath' às dependências
+    }, [email, senha, lembrar, login, navigate, authorities, getDashboardPath]); 
 
     return {
         email,

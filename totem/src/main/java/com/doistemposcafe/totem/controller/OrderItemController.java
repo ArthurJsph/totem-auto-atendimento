@@ -41,7 +41,6 @@ public class OrderItemController {
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<OrderItemOutputDTO> saveItem(@RequestBody OrderItemInputDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderItemService.saveItem(dto));
     }
