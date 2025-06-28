@@ -1,7 +1,6 @@
-// src/hooks/useLogin.ts ou onde seu useLogin estiver
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./useAuth"; 
+import { useAuth } from "./useAuth";
 
 interface UseLoginReturn {
     email: string;
@@ -19,13 +18,14 @@ interface UseLoginReturn {
 
 export function useLogin(): UseLoginReturn {
     const navigate = useNavigate();
-    const { login, isLoading, isAuthenticated, authorities } = useAuth(); 
+    const { login, isLoading, isAuthenticated, authorities } = useAuth();
 
     const [email, setEmail] = useState<string>("");
     const [senha, setSenha] = useState<string>("");
     const [lembrar, setLembrar] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
+    const hasNavigated = useRef(false);
 
     const getDashboardPath = useCallback((userAuthorities: string[]): string => {
         if (userAuthorities.includes('ADMIN')) {
@@ -34,31 +34,37 @@ export function useLogin(): UseLoginReturn {
         if (userAuthorities.includes('MANAGER')) {
             return "/manager";
         }
-        return "/"; 
+
+        return "/home"; 
     }, []);
 
     useEffect(() => {
-        if (isAuthenticated) {
+    
+        if (isAuthenticated && !hasNavigated.current) {
             const path = getDashboardPath(authorities);
+          
             navigate(path);
-            return;
+            hasNavigated.current = true; 
+        } else if (!isAuthenticated && hasNavigated.current) {
+           
+            hasNavigated.current = false;
         }
 
-        
-        const originalOverflow = document.body.style.overflow;
-        const originalHeight = document.body.style.height;
+       
         document.body.style.overflow = "hidden";
         document.body.style.height = "100vh";
 
         return () => {
-            document.body.style.overflow = originalOverflow;
-            document.body.style.height = originalHeight;
+            document.body.style.overflow = "";
+            document.body.style.height = ""; 
         };
-    }, [isAuthenticated, navigate, authorities, getDashboardPath]); 
+    }, [isAuthenticated, navigate, authorities, getDashboardPath]);
 
+    // Função para lidar com o envio do formulário de login.
     const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError(""); 
+        setError(""); // Limpa mensagens de erro anteriores.
+       
 
         try {
             if (!email || !senha) {
@@ -66,20 +72,20 @@ export function useLogin(): UseLoginReturn {
                 return;
             }
 
-            const result = await login(email, senha); 
-            
+           
+            const result = await login(email, senha);
+
             if (result.success) {
+                
                 if (lembrar) {
                     localStorage.setItem("rememberedEmail", email);
                 } else {
                     localStorage.removeItem("rememberedEmail");
                 }
-
-                const path = getDashboardPath(authorities); 
-                navigate(path); 
-            } 
-
+                // A navegação será tratada pelo useEffect.
+            }
         } catch (err: unknown) {
+           
             interface ErrorResponse {
                 response?: {
                     data?: {
@@ -102,10 +108,11 @@ export function useLogin(): UseLoginReturn {
                 errorMessage = typedErr.response.data.message || errorMessage;
             }
             setError(errorMessage);
-            console.error("Erro de login (useLogin):", err);
+            
         }
-    }, [email, senha, lembrar, login, navigate, authorities, getDashboardPath]); 
+    }, [email, senha, lembrar, login]); // Dependências do useCallback.
 
+    // Retorna os estados e funções necessários para o componente Login.
     return {
         email,
         setEmail,

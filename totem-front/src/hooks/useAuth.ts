@@ -1,46 +1,59 @@
 import { useState, useEffect, useCallback } from 'react';
-import * as authService from '../service/auth'; 
+import * as authService from '../service/auth';
 import { User } from '../service/interfaces';
+
 type UserAuthority = 'ADMIN' | 'MANAGER' | 'CLIENT' | string;
 
 interface AuthHookResult {
     isAuthenticated: boolean;
     isLoading: boolean;
     authorities: UserAuthority[];
-    user: User | null; 
+    user: User | null;
     login: (email: string, password: string) => Promise<{ success: boolean; token?: string }>;
-    logout: () => void; 
-    checkAuthStatus: () => void; 
+    logout: () => void;
+    checkAuthStatus: () => void;
 }
 
 export const useAuth = (): AuthHookResult => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
-    const [authorities, setAuthorities] = useState<UserAuthority[]>(() => authService.getUserRoles());
-    const [user, setUser] = useState<User | null>(() => authService.getLoggedUser()); 
-    const [isLoading, setIsLoading] = useState<boolean>(false); 
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authService.isAuthenticated());
+    const [authorities, setAuthorities] = useState<UserAuthority[]>(authService.getUserRoles());
+    const [user, setUser] = useState<User | null>(authService.getLoggedUser());
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    
     const checkAuthStatus = useCallback(() => {
-        setIsLoading(true);
-        const authenticated = authService.isAuthenticated();
-        setIsAuthenticated(authenticated);
 
-        if (authenticated) {
-            setAuthorities(authService.getUserRoles());
-            setUser(authService.getLoggedUser()); 
-        } else {
-            setAuthorities([]);
-            setUser(null); 
-        }
-        setIsLoading(false);
+        const newAuthenticated = authService.isAuthenticated();
+        const newRoles = authService.getUserRoles();
+        const newUser = authService.getLoggedUser();
+
+        setIsAuthenticated(prev => {
+            if (prev !== newAuthenticated) {
+                return newAuthenticated;
+            }
+            return prev; 
+        });
+
+        setAuthorities(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(newRoles)) {
+                return newRoles;
+            }
+            return prev; 
+        });
+
+        setUser(prev => {
+            if (prev?.id !== newUser?.id || prev?.email !== newUser?.email) {
+                return newUser;
+            }
+            return prev; 
+        });
     }, []); 
+
     useEffect(() => {
-        checkAuthStatus(); 
+        checkAuthStatus();
 
         const handleStorageChange = (event: StorageEvent) => {
-            // Reage a mudanças nas chaves 'token' ou 'user'
-            if (event.key === 'token' || event.key === 'user' || event.key === null) {
-                checkAuthStatus(); // Re-avalia o status de autenticação
+            if (event.key === 'token' || event.key === 'user' || event.key === 'roles' || event.key === null) {
+                checkAuthStatus();
             }
         };
 
@@ -49,39 +62,39 @@ export const useAuth = (): AuthHookResult => {
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, [checkAuthStatus]);
+    }, [checkAuthStatus]); 
 
     const login = useCallback(async (email: string, password: string) => {
         setIsLoading(true);
         try {
             const response = await authService.login(email, password);
+            checkAuthStatus();
+
             return { success: true, token: response.token };
         } catch (error) {
             setIsAuthenticated(false);
             setAuthorities([]);
             setUser(null);
-            console.error('Login failed (useAuth):', error);
-            throw error; 
+            throw error;
         } finally {
             setIsLoading(false);
         }
-    }, [checkAuthStatus]); 
+    }, [checkAuthStatus]);
 
-    
     const logout = useCallback(() => {
-        authService.logout(); 
+        authService.logout();
         setIsAuthenticated(false);
         setAuthorities([]);
-        setUser(null); 
-    }, []); 
+        setUser(null);
+    }, []);
 
     return {
         isAuthenticated,
         isLoading,
         authorities,
-        user, 
+        user,
         login,
-        logout, 
+        logout,
         checkAuthStatus,
     };
 };
